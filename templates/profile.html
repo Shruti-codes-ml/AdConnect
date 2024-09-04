@@ -1,0 +1,18 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Profile
+{% endblock %}
+
+{% block content %}
+    {% if user_type == "influencer" %}
+        <h1 class="display-1">Hello Influencer @<span class="text-muted">{{influencer.username}}</span></h1>
+    {% elif user_type=="sponsor" %}
+        <h1 class="display-1">Hello Sponsor @<span class="text-muted">{{sponsor.username}}</span></h1>
+    {% endif %}
+
+    <form action="{{  url_for('logout')  }}">
+        <button class="btn btn-danger">Logout</button>
+    </form>
+    
+{% endblock %}
