@@ -17,6 +17,25 @@
 
     <div class="container">
         {% include 'navbar.html' %}
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            {% for message in messages %}
+                {% if "Error" in message %}
+                    <div class="alert alert-danger" role="alert">
+                        {{ message }}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info" role="alert">
+                        {{ message }}
+                    </div>
+                {% endif %}
+                    
+            {% endfor %}
+
+            {% endif %}
+        {% endwith %}
+        
         {% block content %}
         
         {% endblock %}

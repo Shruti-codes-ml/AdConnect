@@ -9,14 +9,21 @@
         <div class="col-md-4">
             <div class="card p-4">
                 <h1 class="card-title">Login</h1>
-                <form action="">
+                <form action="{{  url_for('login')  }}" method="POST">
                     <div class="form-group p-2">
-                    <label for="username" class="card-text">Username</label>
-                    <input type="text" name="username" class="form-control">
+                        <select name="user_type" class="form-select" aria-label="Default select example" style="background-color: #a5f2f2;">
+                            <option selected value="influencer" style="background-color: #ffffff;">Influencer</option>
+                            <option value="sponsor" style="background-color: #ffffff;">Sponsor</option>
+                            <option value="admin" style="background-color: #ffffff;">Admin</option>
+                          </select>
                     </div>
                     <div class="form-group p-2">
-                    <label for="password" class="card-text">Password</label>
-                    <input type="password" name = "password" class="form-control">
+                        <label for="username" class="card-text">Username</label>
+                        <input type="text" name="username" class="form-control" required>
+                    </div>
+                    <div class="form-group p-2">
+                        <label for="password" class="card-text">Password</label>
+                        <input type="password" name = "password" class="form-control" required>
                     </div>
                     <div class="form-group mt-3 p-2">
                         <button type="submit" class="btn btn-primary">Login</button>

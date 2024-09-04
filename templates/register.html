@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 
 {% block title %}
-    Login Page
+    Register Page
 {% endblock %}
 
 {% block content %}
@@ -9,28 +9,67 @@
         <div class="col-md-4">
             <div class="card p-4">
                 <h1 class="card-title">Register</h1>
-                <form action="">
+                <form action="{{  url_for('register')  }}" method="POST">
                     <div class="form-group p-2">
-                    <label for="username" class="card-text">Username</label>
-                    <input type="text" name="username" class="form-control">
+                        <select name="user_type" id="user_type" class="form-select" aria-label="Default select example" style="background-color: #a5f2f2;">
+                            <option selected value="influencer" style="background-color: #ffffff;">Influencer</option>
+                            <option value="sponsor" style="background-color: #ffffff;">Sponsor</option>
+                            </select>
                     </div>
                     <div class="form-group p-2">
-                    <label for="password" class="card-text">Password</label>
-                    <input type="password" name = "password" class="form-control">
+                        <label for="username" class="card-text">Username</label>
+                        <input type="text" name="username" class="form-control" required>
                     </div>
                     <div class="form-group p-2">
-                    <label for="confirm_password" class="card-text">Confirm Password</label>
-                    <input type="password" name = "confirm_password" class="form-control">
+                        <label for="password" class="card-text">Password</label>
+                        <input type="password" name = "password" class="form-control" required>
                     </div>
                     <div class="form-group p-2">
-                    <label for="name" class="card-text">Name</label>
-                    <input type="text" name="name" class="form-control">
+                        <label for="confirm_password" class="card-text">Confirm Password</label>
+                        <input type="password" name = "confirm_password" class="form-control" required>
                     </div>
+                    <div class="form-group p-2">
+                        <label for="name" class="card-text">Name</label>
+                        <input type="text" name="name" class="form-control">
+                    </div>
+
+                    <!-- Dynamic fields -->
+                    <div id="influencer_fields" class="d-none">
+                        <div class="form-group p-2">
+                            <label for="category" class="card-text">Category</label>
+                            <input type="text" name="category" class="form-control">
+                        </div>
+                        <div class="form-group p-2">
+                            <label for="niche" class="card-text">Niche</label>
+                            <input type="text" name="niche" class="form-control">
+                        </div>
+                    </div>
+
+                    <div id="sponsor_fields" class="d-none">
+                        <div class="form-group p-2">
+                            <label for="budget" class="card-text">Budget</label>
+                            <input type="number" name="budget" class="form-control">
+                        </div>
+                        <div class="form-group p-2">
+                            <label for="industry" class="card-text">Industry</label>
+                            <input type="text" name="industry" class="form-control">
+                        </div>
+                    </div>
+
                     <div class="form-group mt-3 p-2">
-                        <button type="submit" class="btn btn-primary">Login</button>
+                        <button type="submit" class="btn btn-primary">Register</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
+
+    <script>
+        document.getElementById('user_type').addEventListener('change', function() {
+            var userType = this.value;
+            document.getElementById('influencer_fields').classList.toggle('d-none', userType !== 'influencer');
+            document.getElementById('sponsor_fields').classList.toggle('d-none', userType !== 'sponsor');
+        });
+        document.getElementById('user_type').dispatchEvent(new Event('change'));
+    </script>
 {% endblock %}
