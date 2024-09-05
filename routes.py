@@ -152,3 +152,13 @@ def logout():
     session.pop('id')
     flash("User logged out successfully")
     return redirect(url_for('index'))
+
+@app.route("/profile/sponsor/update",methods=["POST"])
+@auth_required
+def update_profile_sponsor():
+    return "Update Profile Sponsor"
+
+@app.route("/profile/influencer/update",methods=["POST"])
+@auth_required
+def update_profile_influencer():
+    return "Update Profile Influencer"

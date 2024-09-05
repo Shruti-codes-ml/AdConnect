@@ -6,13 +6,87 @@
 
 {% block content %}
     {% if user_type == "influencer" %}
-        <h1 class="display-1">Hello Influencer @<span class="text-muted">{{influencer.username}}</span></h1>
+        <form action="{{  url_for('update_profile_influencer')  }}" method="POST" class="p-4 bg-white bg-opacity-75 rounded shadow mt-3">
+            <h1 class="display-1">Hello Influencer @<span class="text-muted">{{influencer.username}}</span></h1>
+        
+            <div class="form-group p-2">
+                <label for="username" class="card-text">Username</label>
+                <input type="text" name="username" class="form-control" value ="{{influencer.username}}" required>
+            </div>
+            <div class="form-group p-2">
+                <label for="password" class="card-text">Current Password</label>
+                <input type="password" name = "current_password" class="form-control">
+            </div>
+            <div class="form-group p-2">
+                <label for="new_password" class="card-text">New Password</label>
+                <input type="password" name = "new_password" class="form-control" >
+            </div>
+            <div class="form-group p-2">
+                <label for="confirm_new_password" class="card-text">Confirm New Password</label>
+                <input type="password" name = "confirm_new_password" class="form-control" >
+            </div>
+            <div class="form-group p-2">
+                <label for="name" class="card-text">Name</label>
+                <input type="text" name="name" class="form-control" value ="{{influencer.name}}">
+            </div>
+
+            <div class="form-group p-2">
+                <label for="category" class="card-text">Category</label>
+                <input type="text" name="category" class="form-control" value ="{{influencer.category}}">
+            </div>
+            <div class="form-group p-2">
+                <label for="niche" class="card-text">Niche</label>
+                <input type="text" name="niche" class="form-control" value ="{{influencer.niche}}">
+            </div>
+            <div class="form-group p-2">
+                <label for="reach" class="card-text">Reach</label>
+                <input type="text" name="reach" class="form-control" value ="{{influencer.reach}}">
+            </div>   
+            <div class="form-group mt-3 p-2">
+                <button type="submit" class="btn btn-primary">Update Details</button>
+            </div>        
+        </form>
+
     {% elif user_type=="sponsor" %}
-        <h1 class="display-1">Hello Sponsor @<span class="text-muted">{{sponsor.username}}</span></h1>
+        <form action="{{  url_for('update_profile_sponsor')  }}" method="POST" class="p-4 bg-white bg-opacity-75 rounded shadow mt-3">
+            <h1 class="display-1">Hello Sponsor @<span class="text-muted">{{sponsor.username}}</span></h1>
+        
+            <div class="form-group p-2">
+                <label for="username" class="card-text">Username</label>
+                <input type="text" name="username" class="form-control" value ="{{sponsor.username}}" required>
+            </div>
+            <div class="form-group p-2">
+                <label for="password" class="card-text">Current Password</label>
+                <input type="password" name = "current_password" class="form-control">
+            </div>
+            <div class="form-group p-2">
+                <label for="new_password" class="card-text">New Password</label>
+                <input type="password" name = "new_password" class="form-control">
+            </div>
+            <div class="form-group p-2">
+                <label for="confirm_new_password" class="card-text">Confirm New Password</label>
+                <input type="password" name = "confirm_new_password" class="form-control">
+            </div>
+            <div class="form-group p-2">
+                <label for="name" class="card-text">Name</label>
+                <input type="text" name="name" class="form-control" value ="{{sponsor.name}}">
+            </div>
+            <div class="form-group p-2">
+                <label for="budget" class="card-text">Budget</label>
+                <input type="number" name="budget" class="form-control" value ="{{sponsor.budget}}">
+            </div>
+            <div class="form-group p-2">
+                <label for="industry" class="card-text">Industry</label>
+                <input type="text" name="industry" class="form-control" value ="{{sponsor.industry}}">
+            </div>
+        </form>
+        <div class="form-group mt-3 p-2">
+            <button type="submit" class="btn btn-primary">Update Details</button>
+        </div>
     {% endif %}
 
-    <form action="{{  url_for('logout')  }}">
-        <button class="btn btn-danger">Logout</button>
+    <form action="{{  url_for('logout')  }}" class="form mt-2">
+        <button type="submit" class="btn btn-danger">Logout</button>
     </form>
-    
+
 {% endblock %}
