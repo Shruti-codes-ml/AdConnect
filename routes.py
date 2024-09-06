@@ -24,7 +24,7 @@ def login_post():
     username = request.form.get("username")
     password = request.form.get("password")
 
-    if not username or not password : 
+    if not user_type or not username or not password : 
         flash("Error : Please fill all required fields")
         return redirect(url_for('login'))
     
@@ -55,6 +55,17 @@ def login_post():
     flash(f"{user_type.capitalize()} login successful")
     return redirect(url_for('index'))
 
+def is_valid_password(password):
+    if len(password) < 8:
+        return "Password must be at least 8 characters long"
+    if not re.search("[a-z]", password) or not re.search("[A-Z]", password):
+        return "Password must contain both uppercase and lowercase letters"
+    if not re.search("[0-9]", password):
+        return "Password must contain at least one number"
+    if not re.search("[@#$%^&+=]", password):
+        return "Password must contain at least one special character (@#$%^&+=)"
+    return None
+
 @app.route("/register", methods=["POST"])
 def register_post():
     user_type = request.form.get("user_type")
@@ -63,7 +74,7 @@ def register_post():
     confirm_password = request.form.get("confirm_password")
     name = request.form.get("name")
 
-    if not username or not password or not confirm_password:
+    if not user_type or not username or not password or not confirm_password or not name:
         flash("Error : Please fill all required fields")
         return redirect(url_for('register'))
     
@@ -77,19 +88,13 @@ def register_post():
     if password != confirm_password:
         flash("Error : Passwords do not match")
         return redirect(url_for('register'))
-    if len(password) < 8:
-        flash("Error: Password must be at least 8 characters long")
+    password_error = is_valid_password(password)
+    if password_error:
+        flash(f"Error : {password_error}")
         return redirect(url_for('register'))
-    if not re.search("[a-z]", password) or not re.search("[A-Z]", password):
-        flash("Error: Password must contain both uppercase and lowercase letters")
-        return redirect(url_for('register'))
-    if not re.search("[0-9]", password):
-        flash("Error: Password must contain at least one number")
-        return redirect(url_for('register'))
-    if not re.search("[@#$%^&+=]", password):
-        flash("Error: Password must contain at least one special character (@#$%^&+=)")
-        return redirect(url_for('register'))
-
+    if not name or not name.isalpha():
+        flash("Error : Name should contain only alphabetic characters")
+        return redirect(url_for('profile'))
     if user_type == "influencer":
         additional_fields = {"category": request.form.get("category"), "niche": request.form.get("niche"), "reach" : request.form.get("reach")}
         user_class = Influencer
@@ -153,12 +158,172 @@ def logout():
     flash("User logged out successfully")
     return redirect(url_for('index'))
 
-@app.route("/profile/sponsor/update",methods=["POST"])
+@app.route("/profile/sponsor/update", methods = ["POST"])
 @auth_required
 def update_profile_sponsor():
-    return "Update Profile Sponsor"
+    username = request.form.get('username')
+    password = request.form.get('current_password')
+    new_password = request.form.get('new_password')
+    confirm_new_password = request.form.get('confirm_new_password')
+    name = request.form.get('name')
+    budget = request.form.get('budget')
+    industry = request.form.get('industry')
+
+    updated_fields = []
+
+    if not session['user_type'] == 'sponsor':
+        flash("You are not authorized to update sponsor details")
+        return redirect(url_for('profile'))
+
+    sponsor = Sponsor.query.filter_by(id = session['id']).first()
+    if password:
+        if check_password_hash(sponsor.passhash , password):
+            if username and sponsor.username != username:
+                if Sponsor.query.filter_by(username = username).first():
+                    flash("Error : Username already exists.")
+                    return redirect(url_for('profile'))
+                elif len(username) < 3 or len(username) > 20:
+                    flash("Error: Username must be between 3 and 20 characters")
+                    return redirect(url_for('profile'))
+                if not username.isalnum():
+                    flash("Error: Username must contain only letters and numbers")
+                    return redirect(url_for('profile'))
+                else:
+                    sponsor.username = username
+                    updated_fields.append("Username")
+                    
+            if new_password or confirm_new_password: 
+                if password != new_password and new_password == confirm_new_password:
+                    password_error = is_valid_password(new_password)
+                    if password_error:
+                        flash(f"Error : {password_error}")
+                        return redirect(url_for('profile'))
+                    else:
+                        sponsor.passhash = generate_password_hash(new_password)
+                        updated_fields.append("Password")
+                else:
+                    flash("Error : New password must be different from the current password and confirm password should match")
+                    return redirect(url_for('profile'))
+            
+            if name and sponsor.name != name:
+                if not re.match("^[A-Za-z\s]+$", name):
+                    flash("Error : Name should contain only alphabetic characters")
+                    return redirect(url_for('profile'))
+                sponsor.name = name
+                updated_fields.append("Name")
+            if budget and str(sponsor.budget) != budget:
+                try:
+                    float(budget)
+                except ValueError:
+                    flash("Error : Budget should be a number")
+                    return redirect(url_for('profile'))
+                sponsor.budget = budget
+                updated_fields.append("Budget")
+            if industry and sponsor.industry != industry:
+                if not industry.isalpha():
+                    flash("Error : Industry should have all alphabetic characters")
+                    return redirect(url_for('profile'))
+                sponsor.industry = industry
+                updated_fields.append("Industry")
+            if updated_fields:
+                db.session.commit()
+                flash(f"{', '.join(updated_fields)} updated successfully!")
+            else:
+                flash("No new changes made")
+            return redirect(url_for('profile'))
+        else:
+            flash("Error : Password is incorrect")
+            return redirect(url_for('profile'))
+    else:
+        flash("Error : Verify password to make changes to profile")
+        return redirect(url_for('profile'))
+
 
 @app.route("/profile/influencer/update",methods=["POST"])
 @auth_required
 def update_profile_influencer():
-    return "Update Profile Influencer"
+    username = request.form.get('username')
+    password = request.form.get('current_password')
+    new_password = request.form.get('new_password')
+    confirm_new_password = request.form.get('confirm_new_password')
+    name = request.form.get('name')
+    category = request.form.get('category')
+    niche = request.form.get('niche')
+    reach = request.form.get('reach')
+
+    updated_fields = []
+    if not session['user_type'] == 'influencer':
+        flash("Error : You are not authorized to update influencer details")
+        return redirect(url_for('profile'))
+
+    influencer = Influencer.query.filter_by(id = session['id']).first()
+    if password:
+        if check_password_hash(influencer.passhash , password):
+            if username and influencer.username != username:
+                if Influencer.query.filter_by(username = username).first():
+                    flash("Error : Username already exists.")
+                    return redirect(url_for('profile'))
+                elif len(username) < 3 or len(username) > 20:
+                    flash("Error: Username must be between 3 and 20 characters")
+                    return redirect(url_for('profile'))
+                if not username.isalnum():
+                    flash("Error: Username must contain only letters and numbers")
+                    return redirect(url_for('profile'))
+                else:
+                    influencer.username = username
+                    updated_fields.append("Username")
+                    
+            if new_password or confirm_new_password: 
+                if password != new_password and new_password == confirm_new_password:
+                    password_error = is_valid_password(new_password)
+                    if password_error:
+                        flash(f"Error : {password_error}")
+                        return redirect(url_for('profile'))
+                    else:
+                        influencer.passhash = generate_password_hash(new_password)
+                        updated_fields.append("Password")
+                else:
+                    flash("Error : New password must be different from the current password and confirm password should match")
+                    return redirect(url_for('profile'))
+            
+            if name and influencer.name != name:
+                if not re.match("^[A-Za-z\s]+$", name):
+                    flash("Error : Name should contain only alphabetic characters")
+                    return redirect(url_for('profile'))
+                influencer.name = name
+                updated_fields.append("Name")
+
+            if category and influencer.category != category:
+                if not category.isalpha():
+                    flash("Error : Category must have only alphabetic characters")
+                    return redirect(url_for('profile'))
+                influencer.category = category
+                updated_fields.append("Category")
+            if niche and influencer.niche != niche:
+                if not niche.isalpha():
+                    flash("Error : Niche should have all alphabetic characters")
+                    return redirect(url_for('profile'))
+                influencer.niche = niche
+                updated_fields.append("Niche")
+            if reach and str(influencer.reach) != reach:
+                try:
+                    float(reach)
+                except ValueError:
+                    flash("Error : Reach should be a number")
+                    return redirect(url_for('profile'))
+                influencer.reach = reach
+                updated_fields.append("Reach")
+            if updated_fields:
+                db.session.commit()
+                flash(f"{', '.join(updated_fields)} updated successfully!")
+            else:
+                flash("No new changes made")
+            return redirect(url_for('profile'))
+        else:
+            flash("Error : Password is incorrect")
+            return redirect(url_for('profile'))
+    else:
+        flash("Error : Verify password to make changes to profile")
+        return redirect(url_for('profile'))
+
+
