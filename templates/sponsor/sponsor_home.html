@@ -1,0 +1,17 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Home Page
+{% endblock %}
+
+{% block content %}
+    <div class="p-4 bg-white bg-opacity-75 rounded shadow mt-3">
+        <h1 class="display-1">Hello @<span class="text-muted">{{  sponsor.username  }}</span></h1>
+        <div class="d-flex gap-5">
+            <a href="{{  url_for('create_campaign',sponsor_id = sponsor.id)  }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Create Campaign</a>
+
+            <a href="{{  url_for('show_campaigns',sponsor_id = sponsor.id)  }}" class="btn btn-secondary"><i class="fa-solid fa-list"></i> Show Campaigns</a>
+        </div>
+    </div>
+
+{% endblock %}

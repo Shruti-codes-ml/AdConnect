@@ -2,9 +2,10 @@ from app import app
 import re
 from flask import render_template
 from flask import request, flash, redirect, url_for, session
-from models import db, Influencer, Sponsor, Admin
+from models import db, Influencer, Sponsor, Admin, Campaign
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
+from datetime import datetime
 
 @app.route("/")
 def index():
@@ -138,6 +139,34 @@ def auth_required(inner_func):
             return redirect(url_for('login'))
     return decorated_func
 
+def sponsor_required(inner_func):
+    @wraps(inner_func)
+    def decorated_func(*args, **kwargs):
+        if session.get("id"):
+            if session.get("user_type") == "sponsor":
+                return inner_func(*args, **kwargs)
+            else:
+                flash("Error : You are not authorized to access this page")
+                return redirect(url_for('index'))
+        else:
+            flash("Error : Please log in to continue")
+            return redirect(url_for('login'))
+    return decorated_func
+
+def influencer_required(inner_func):
+    @wraps(inner_func)
+    def decorated_func(*args, **kwargs):
+        if session.get("id"):
+            if session.get("user_type") == "influencer":
+                return inner_func(*args, **kwargs)
+            else:
+                flash("Error : You are not authorized to access this page")
+                return redirect(url_for('index'))
+        else:
+            flash("Error : Please log in to continue")
+            return redirect(url_for('login'))
+    return decorated_func
+
 @app.route("/profile")
 @auth_required
 def profile():
@@ -159,7 +188,7 @@ def logout():
     return redirect(url_for('index'))
 
 @app.route("/profile/sponsor/update", methods = ["POST"])
-@auth_required
+@sponsor_required
 def update_profile_sponsor():
     username = request.form.get('username')
     password = request.form.get('current_password')
@@ -170,10 +199,6 @@ def update_profile_sponsor():
     industry = request.form.get('industry')
 
     updated_fields = []
-
-    if not session['user_type'] == 'sponsor':
-        flash("You are not authorized to update sponsor details")
-        return redirect(url_for('profile'))
 
     sponsor = Sponsor.query.filter_by(id = session['id']).first()
     if password:
@@ -240,7 +265,7 @@ def update_profile_sponsor():
 
 
 @app.route("/profile/influencer/update",methods=["POST"])
-@auth_required
+@influencer_required
 def update_profile_influencer():
     username = request.form.get('username')
     password = request.form.get('current_password')
@@ -327,3 +352,81 @@ def update_profile_influencer():
         return redirect(url_for('profile'))
 
 
+@app.route("/sponsor/home")
+@sponsor_required
+def sponsor_home():
+    sponsor = Sponsor.query.filter_by(id=session['id']).first()
+    return render_template('/sponsor/sponsor_home.html',sponsor = sponsor)
+
+@app.route("/influencer/home")
+@influencer_required
+def influencer_home():
+    influencer = Influencer.query.filter_by(id=session['id']).first()
+    return "Welcome influencer"
+
+@app.route("/sponsor/<int:sponsor_id>/create_campaign")
+@sponsor_required
+def create_campaign(sponsor_id):
+    today = datetime.now().strftime('%Y-%m-%d')
+    sponsor = Sponsor.query.filter_by(id=sponsor_id).first()
+    return render_template("/sponsor/create_campaign.html", today = today, sponsor=sponsor)
+
+@app.route("/sponsor/<int:sponsor_id>/create_campaign", methods=['POST'])
+@sponsor_required
+def create_campaign_post(sponsor_id):
+    name = request.form.get('campaign_name')
+    description = request.form.get("description")
+    start_date = request.form.get("start_date")
+    end_date = request.form.get("end_date")
+    budget = request.form.get("budget")
+    visibility = request.form.get("visibility")
+    goals = request.form.get("goals")
+    
+    if not all([name,description,start_date,end_date,budget,visibility,goals]):
+        flash("Error : Please enter all required fields")
+        return redirect(url_for('create_campaign', sponsor_id=sponsor_id))
+    try:
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+    except ValueError:
+        flash("Error: Invalid date format", "danger")
+        return redirect(url_for('create_campaign', sponsor_id=sponsor_id))
+    if start_date < datetime.now().date():
+        flash("Error : Start date cannot be before today")
+        return redirect(url_for('create_campaign', sponsor_id=sponsor_id))
+    if start_date > end_date:
+        flash("Error : Start date cannot be after end date")
+        return redirect(url_for('create_campaign', sponsor_id=sponsor_id))
+
+    try:
+        budget = float(budget)
+        if budget < 0:
+            raise ValueError
+    except ValueError:
+        flash("Error : Budget must be a positive number")
+        return redirect(url_for('create_campaign', sponsor_id=sponsor_id))
+
+    if not (visibility=="public" or visibility=="private"):
+        flash("Error : Visibility should be either public or private")
+        return redirect(url_for('create_campaign', sponsor_id=sponsor_id)) 
+
+    campaign = Campaign(name = name, 
+                        description = description, 
+                        start_date = start_date, 
+                        end_date=end_date,
+                        budget=budget, 
+                        visibility=visibility,
+                        goals = goals,
+                        sponsor_id = sponsor_id)
+    
+    db.session.add(campaign)
+    db.session.commit()
+    flash("Campaign added successfully")
+    return redirect(url_for('sponsor_home'))
+
+@app.route("/sponsor/<int:sponsor_id>/show_campaigns")
+@sponsor_required
+def show_campaigns(sponsor_id):
+    campaigns = Campaign.query.filter_by(sponsor_id = sponsor_id).all()
+    sponsor = Sponsor.query.filter_by(id=sponsor_id).first()
+    return render_template("sponsor/show_campaigns.html", campaigns = campaigns,sponsor = sponsor)

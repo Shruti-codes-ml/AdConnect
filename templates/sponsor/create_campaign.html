@@ -1,0 +1,54 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Create Campaign
+{% endblock %}
+
+{% block content %}
+    <div class="p-4 bg-white bg-opacity-75 rounded shadow mt-3">
+        <h1 class="display-1">Hello @<span class="text-muted">{{  sponsor.username  }}</span></h1>
+        <div class="d-flex gap-5">
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Create Campaign</button>
+
+            <a href="{{  url_for('show_campaigns',sponsor_id = sponsor.id)  }}" class="btn btn-secondary"><i class="fa-solid fa-list"></i> Show Campaigns</a>
+        </div>
+    </div>
+    <form action="{{  url_for('create_campaign_post', sponsor_id = sponsor.id)  }}" method="POST" class="p-4 bg-white bg-opacity-75 rounded shadow mt-3">
+        <h1 class="display-1">Create Campaign</h1>
+        
+        <div class="form-group p-2">
+            <label for="name" class="form-label">Name of the Campaign</label>
+            <input type="text" name="campaign_name" class="form-control" required>
+        </div>
+        <div class="form-group p-2">
+            <label for="description" class="form-label"> Description </label>
+            <input type="text" name="description" class="form-control" required>
+        </div>
+        <div class="form-group p-2">
+            <label for="start_date" class="form-label">Start Date</label>
+            <input type="date" name="start_date" class="form-control" value={{today}} required>
+        </div>
+        <div class="form-group p-2">
+            <label for="end_date" class="form-label">End Date</label>
+            <input type="date" name="end_date" class="form-control" value = {{today}} required>
+        </div>
+        <div class="form-group p-2">
+            <label for="budget" class="form-label">Budget</label>
+            <input type="number" name="budget" class="form-control" min="0" required>
+        </div>
+        <div class="form-group p-2">
+            <label for="visibility" class="form-label">Visibility</label>
+            <select name="visibility" class="form-select">
+                <option selected value="public">Public</option>
+                <option value="private">Private</option>
+            </select>
+        </div>
+        <div class="form-group p-2">
+            <label for="goals" class="form-label">Goals</label>
+            <input type="text" name="goals" class="form-control">
+        </div>
+        <div class="form-group p-2">
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add Campaign</button>
+        </div>
+    </form>
+{% endblock %}

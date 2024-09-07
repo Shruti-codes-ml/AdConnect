@@ -1,0 +1,49 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Show Campaigns
+{% endblock %}
+
+{% block content %}
+    <div class="p-4 bg-white bg-opacity-75 rounded shadow mt-3">
+        <h1 class="display-1">Hello @<span class="text-muted">{{  sponsor.username  }}</span></h1>
+        <div class="d-flex gap-5">
+            <a href="{{  url_for('create_campaign',sponsor_id = sponsor.id)  }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Create Campaign</a>
+            
+            <button type="submit" class="btn btn-secondary"><i class="fa-solid fa-list"></i> Show Campaigns</button>
+ 
+        </div>
+    </div>    
+
+    <div class="p-4 bg-white bg-opacity-75 rounded shadow mt-3">
+        <h1 class="display-1">My Campaigns</h1>
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <td>Name</td>
+                    <td>Description</td>
+                    <td>Start Date</td>
+                    <td>End Date</td>
+                    <td>Budget</td>
+                    <td>Visibility</td>
+                    <td>Goals</td>
+                    <td>Actions</td>
+                </tr>
+            </thead>
+            <tbody>
+                {% for campaign in campaigns %}
+                    <tr>
+                        <td>{{campaign.name}}</td>
+                        <td>{{campaign.description}}</td>
+                        <td>{{campaign.start_date}}</td>
+                        <td>{{campaign.end_date}}</td>
+                        <td>{{campaign.budget}}</td>
+                        <td>{{campaign.visibility}}</td>
+                        <td>{{campaign.goals}}</td>
+                        <td>Actions</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

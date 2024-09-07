@@ -1,1 +1,1 @@
-picsum id = 20
+budget has to be greater than 0
