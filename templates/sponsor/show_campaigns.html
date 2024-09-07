@@ -40,7 +40,16 @@
                         <td>{{campaign.budget}}</td>
                         <td>{{campaign.visibility}}</td>
                         <td>{{campaign.goals}}</td>
-                        <td>Actions</td>
+                        <td>
+                            <a href="{{url_for('update_campaign', campaign_id=campaign.id)}}" class="btn btn-primary">
+                                <i class="fas fa-edit"></i>
+                                Update
+                            </a>
+                            <a href="{{url_for('delete_campaign', campaign_id=campaign.id)}}" class="btn btn-danger">
+                                <i class="fas fa-trash"></i>
+                                Delete 
+                            </a>
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>

@@ -430,3 +430,80 @@ def show_campaigns(sponsor_id):
     campaigns = Campaign.query.filter_by(sponsor_id = sponsor_id).all()
     sponsor = Sponsor.query.filter_by(id=sponsor_id).first()
     return render_template("sponsor/show_campaigns.html", campaigns = campaigns,sponsor = sponsor)
+
+@app.route("/campaign/<int:campaign_id>/update")
+def update_campaign(campaign_id):
+    campaign = Campaign.query.filter_by(id=campaign_id).first()
+    return render_template('/sponsor/update_campaign.html', campaign = campaign)
+
+@app.route("/campaign/<int:campaign_id>/update" , methods=['POST'])
+def update_campaign_post(campaign_id):
+    campaign = Campaign.query.get(campaign_id)
+    if not campaign:
+        flash("Campaign does not exist")
+        return redirect(url_for("sponsor_home"))
+    
+    name = request.form.get('campaign_name')
+    description = request.form.get("description")
+    start_date = request.form.get("start_date")
+    end_date = request.form.get("end_date")
+    budget = request.form.get("budget")
+    visibility = request.form.get("visibility")
+    goals = request.form.get("goals")
+
+    campaign = Campaign.query.get(campaign_id)
+
+    if not all([name,description,start_date,end_date,budget,visibility,goals]):
+        flash("Error : Please enter all required fields")
+        return redirect(url_for('update_campaign', campaign_id = campaign_id))
+    try:
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+    except ValueError:
+        flash("Error: Invalid date format", "danger")
+        return redirect(url_for('update_campaign', campaign_id = campaign_id))
+    if start_date != campaign.start_date:
+        flash("Error : Start date cannot be edited")
+        return redirect(url_for('update_campaign', campaign_id = campaign_id))
+    if start_date > end_date:
+        flash("Error : Start date cannot be after end date")
+        return redirect(url_for('update_campaign', campaign_id = campaign_id))
+
+    try:
+        budget = float(budget)
+        if budget < 0:
+            raise ValueError
+    except ValueError:
+        flash("Error : Budget must be a positive number")
+        return redirect(url_for('update_campaign', campaign_id = campaign_id))
+
+    if not (visibility=="public" or visibility=="private"):
+        flash("Error : Visibility should be either public or private")
+        return redirect(url_for('update_campaign', campaign_id = campaign_id)) 
+
+    campaign.name = name
+    campaign.description = description
+    campaign.end_date = end_date
+    campaign.budget = budget
+    campaign.visibility = visibility
+    campaign.goals = goals
+
+    db.session.commit()
+    flash("Campaign updated successfully")
+    return redirect(url_for('show_campaigns', sponsor_id = campaign.sponsor_id))
+
+@app.route("/campaign/<int:campaign_id>/delete")
+def delete_campaign(campaign_id):
+    campaign = Campaign.query.get(campaign_id)
+    return render_template("/sponsor/delete_campaign.html", campaign=campaign)
+
+@app.route("/campaign/<int:campaign_id>/delete", methods = ['POST'])
+def delete_campaign_post(campaign_id):
+    campaign = Campaign.query.get(campaign_id)
+    if not campaign:
+        flash("Campaign does not exist")
+        return redirect(url_for("sponsor_home"))
+    db.session.delete(campaign)
+    db.session.commit()
+    flash("Campaign deleted successfully")
+    return redirect(url_for('sponsor_home'))

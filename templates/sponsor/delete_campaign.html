@@ -1,0 +1,21 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Delete Campaign
+{% endblock %}
+
+{% block content %}
+    <div class="p-4 bg-white bg-opacity-75 rounded shadow mt-3">
+        <h1 class="display-1">Delete Campaign </h1>
+        <p class="f-3">Are you sure you want to delete {{campaign.name}}?</p>
+        <form action="{{url_for('delete_campaign_post', campaign_id = campaign.id)}}" method="post" class="form">
+        
+            <div class="form-group">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash"></i>
+                    Delete
+                </button>
+            </div>
+        </form>
+    </div>
+{% endblock %}
