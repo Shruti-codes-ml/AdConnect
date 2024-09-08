@@ -2,7 +2,7 @@ from app import app
 import re
 from flask import render_template
 from flask import request, flash, redirect, url_for, session
-from models import db, Influencer, Sponsor, Admin, Campaign
+from models import db, Influencer, Sponsor, Admin, Campaign, AdRequest
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from datetime import datetime
@@ -66,6 +66,54 @@ def is_valid_password(password):
     if not re.search("[@#$%^&+=]", password):
         return "Password must contain at least one special character (@#$%^&+=)"
     return None
+
+# @app.route("/register", methods=["POST"])
+# def register_post():
+#     user_type = request.form.get("user_type")
+#     username = request.form.get("username")
+#     password = request.form.get("password")
+#     confirm_password = request.form.get("confirm_password")
+#     name = request.form.get("name")
+
+#     if user_type == "influencer" : 
+#         category = request.form.get("category")
+#         niche = request.form.get("niche")
+#         if not username or not password or not confirm_password or not category or not niche : 
+#             flash("Error : Please fill all required fields")
+#             return redirect(url_for('register'))
+#         if password != confirm_password:
+#             flash("Error : Passwords do not match")
+#             return redirect(url_for('register'))
+
+#         influencer = Influencer.query.filter_by(username = username).first()
+#         if influencer : 
+#             flash("Error : Username already taken")
+#             return redirect(url_for('register'))
+#         new_influencer = Influencer(username = username, passhash = generate_password_hash(password),name=name, category = category, niche=niche)
+#         db.session.add(new_influencer)
+#         db.session.commit()
+#         flash("Influencer successfully registered")
+#         return redirect(url_for('index'))
+#     if user_type == "sponsor" :
+#         budget = request.form.get("budget")
+#         industry = request.form.get("industry")
+
+#         if not username or not password or not confirm_password or not budget or not industry : 
+#             flash("Error : Please fill all required fields")
+#             return redirect(url_for('register'))
+#         if password != confirm_password:
+#             flash("Error : Passwords do not match")
+#             return redirect(url_for('register'))
+
+#         sponsor = Sponsor.query.filter_by(username = username).first()
+#         if sponsor : 
+#             flash("Error : Username already taken")
+#             return redirect(url_for('register'))
+#         new_sponsor = Sponsor(username = username, passhash = generate_password_hash(password),name=name, budget = budget, industry = industry)
+#         db.session.add(new_sponsor)
+#         db.session.commit()
+#         flash("Sponsor successfully registered")
+#         return redirect(url_for('index'))
 
 @app.route("/register", methods=["POST"])
 def register_post():
@@ -238,7 +286,10 @@ def update_profile_sponsor():
                 updated_fields.append("Name")
             if budget and str(sponsor.budget) != budget:
                 try:
-                    float(budget)
+                    budget = float(budget)
+                    if budget <= 0:
+                        flash("Error : Budget should be greater than 0")
+                        return redirect(url_for('profile')) 
                 except ValueError:
                     flash("Error : Budget should be a number")
                     return redirect(url_for('profile'))
@@ -432,11 +483,13 @@ def show_campaigns(sponsor_id):
     return render_template("sponsor/show_campaigns.html", campaigns = campaigns,sponsor = sponsor)
 
 @app.route("/campaign/<int:campaign_id>/update")
+@sponsor_required
 def update_campaign(campaign_id):
     campaign = Campaign.query.filter_by(id=campaign_id).first()
     return render_template('/sponsor/update_campaign.html', campaign = campaign)
 
 @app.route("/campaign/<int:campaign_id>/update" , methods=['POST'])
+@sponsor_required
 def update_campaign_post(campaign_id):
     campaign = Campaign.query.get(campaign_id)
     if not campaign:
@@ -493,11 +546,13 @@ def update_campaign_post(campaign_id):
     return redirect(url_for('show_campaigns', sponsor_id = campaign.sponsor_id))
 
 @app.route("/campaign/<int:campaign_id>/delete")
+@sponsor_required
 def delete_campaign(campaign_id):
     campaign = Campaign.query.get(campaign_id)
     return render_template("/sponsor/delete_campaign.html", campaign=campaign)
 
 @app.route("/campaign/<int:campaign_id>/delete", methods = ['POST'])
+@sponsor_required
 def delete_campaign_post(campaign_id):
     campaign = Campaign.query.get(campaign_id)
     if not campaign:
@@ -506,4 +561,95 @@ def delete_campaign_post(campaign_id):
     db.session.delete(campaign)
     db.session.commit()
     flash("Campaign deleted successfully")
+    return redirect(url_for('sponsor_home'))
+
+@app.route("/sponsor/search")
+@sponsor_required
+def search_influencer():
+    categories = [influencer.category for influencer in Influencer.query.distinct(Influencer.category).all()]
+    niches = [influencer.niche for influencer in Influencer.query.distinct(Influencer.niche).all()]
+
+    influencers = Influencer.query.all()
+    return render_template("/sponsor/search_influencers.html", influencers = influencers, categories=categories, niches=niches)
+
+@app.route("/sponsor/search", methods=["POST"])
+@sponsor_required
+def search_influencer_post():
+    category = request.form.get('category')
+    niche = request.form.get('niche')
+    reach = request.form.get("reach")
+    
+    query = Influencer.query
+    if category:
+        query = query.filter(Influencer.category == category)
+    if niche:
+        query = query.filter(Influencer.niche == niche)
+    if reach:
+        query = query.filter(Influencer.reach >= int(reach))
+
+    influencers = query.all()
+    categories = set([influencer.category for influencer in Influencer.query.distinct(Influencer.category).all()])
+    niches = set([influencer.niche for influencer in Influencer.query.distinct(Influencer.niche).all()])
+
+    return render_template("/sponsor/search_influencers.html", influencers = influencers, categories=categories, niches=niches)
+
+@app.route("/sponsor/search/<int:id>/view_influencer")
+@sponsor_required
+def view_influencer(id):
+    influencer = Influencer.query.get(id)
+    return render_template('/sponsor/view_influencer.html',influencer = influencer)
+
+@app.route("/sponsor/create_ad_request/<int:influencer_id>")
+@sponsor_required
+def create_ad_request(influencer_id):
+    sponsor_id = session['id']
+    campaigns = Campaign.query.filter_by(sponsor_id = sponsor_id)
+    influencers = Influencer.query.all()
+    return render_template('/sponsor/create_ad_request.html',campaigns=campaigns, influencers=influencers,influencer_id=influencer_id)
+
+@app.route("/sponsor/create_ad_request/<int:influencer_id>", methods=['POST'])
+@sponsor_required
+def create_ad_request_post(influencer_id):
+    sponsor_id = session['id']
+    campaign_id = request.form.get('campaign_id')
+    inflcr_id = request.form.get('influencer_id')
+    messages = request.form.get("messages")
+    requirements = request.form.get("requirements")
+    payment_amount = request.form.get("payment_amount")   
+
+    if not all([sponsor_id,campaign_id,inflcr_id,payment_amount]):
+        flash("Please fill all required fields")
+        return redirect(url_for('create_ad_request',influencer_id=influencer_id))
+    
+    campaign = Campaign.query.filter_by(id = campaign_id, sponsor_id=sponsor_id).first()
+    if not campaign:
+        flash("Invalid campaign. Please select a valid campaign.")
+        return redirect(url_for('create_ad_request', influencer_id=influencer_id))
+
+    influencer = Influencer.query.filter_by(id=inflcr_id).first()
+    if not influencer:
+        flash("Invalid influencer. Please select a valid influencer.")
+        return redirect(url_for('create_ad_request', influencer_id=influencer_id))
+
+    try:
+        payment_amount = float(payment_amount)
+        if payment_amount <= 0:
+            flash("Error : Payment amount be greater than 0")
+            return redirect(url_for('create_ad_request', influencer_id=influencer_id))
+    except ValueError:
+        flash("Error: Invalid payment amount")
+        return redirect(url_for('create_ad_request', influencer_id=influencer_id))
+    
+    ad_request = AdRequest(
+        campaign_id = campaign_id,
+        influencer_id = inflcr_id,
+        sponsor_id = sponsor_id,
+        messages = messages,
+        requirements = requirements,
+        payment_amount = payment_amount,
+        status = "Pending"
+    )
+    db.session.add(ad_request)
+    db.session.commit()
+    flash("Ad Request sent successfully")
     return redirect(url_for('sponsor_home'))

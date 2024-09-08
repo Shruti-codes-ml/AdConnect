@@ -1,0 +1,49 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Create Ad Request
+{% endblock %}
+
+{% block content %}
+    <div class="p-4 bg-white bg-opacity-75 rounded shadow mt-3">
+       <h1 class="display-1">Create Ad Request</h1>
+
+       <form action="{{url_for('create_ad_request_post', influencer_id = influencer_id)}}" method="POST">
+            <div class="form-group p-2">
+                <label for="campaign_name" class="form-label">Campaign Name</label>
+                <select name="campaign_id" class="form-select">
+                    {% for campaign in campaigns %}
+                        <option value="{{campaign.id}}">{{campaign.name}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group p-2">
+                <label for="influencer_name" class="form-label">Influencer Name</label>
+                <select name="influencer_id" class="form-select">
+                    {% for influencer in influencers %}
+                        {% if influencer.id == influencer_id %}
+                            <option value="{{influencer.id}}" selected>{{influencer.name}}</option>
+                        {% else %}
+                            <option value="{{influencer.id}}">{{influencer.name}}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group p-2">
+                <label for="messages" class="form-label">Message</label>
+                <input type="text" class="form-control" name="messages">
+            </div>
+            <div class="form-group p-2">
+                <label for="requirements" class="form-label">Requirements</label>
+                <input type="text" class="form-control" name="requirements">
+            </div>
+            <div class="form-group p-2">
+                <label for="payment_amount" class="form-label">Payment Amount</label>
+                <input type="number" class="form-control" name="payment_amount" min="0" required>
+            </div>
+            <div class="form-group p-2">
+                <button type="submit" class="btn btn-success"><i class="fa-solid fa-plus"></i> Create Ad Request</button>
+            </div>
+       </form>
+    </div>
+{% endblock %}

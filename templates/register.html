@@ -9,7 +9,7 @@
         <div class="col-md-4 d-inline-block p-4 bg-white bg-opacity-75 rounded shadow">
             <div class="card p-4 bg-white bg-opacity-75">
                 <h1 class="card-title">Register</h1>
-                <form action="{{  url_for('register')  }}" method="POST">
+                <form action="{{url_for('register')}}" method="POST">
                     <div class="form-group p-2">
                         <select name="user_type" id="user_type" class="form-select" aria-label="Default select example" style="background-color: #a5f2f2;">
                             <option selected value="influencer" style="background-color: #ffffff;">Influencer</option>
@@ -34,31 +34,32 @@
                     </div>
 
                     <!-- Dynamic fields -->
-                    <div id="influencer_fields" class="d-none">
-                        <div class="form-group p-2">
-                            <label for="category" class="card-text">Category</label>
-                            <input type="text" name="category" class="form-control" required>
+                        <div id="influencer-fields">
+                            <div class="form-group p-2">
+                                <label for="category" class="card-text">Category</label>
+                                <input type="text" name="category" class="form-control" required>
+                            </div>
+                            <div class="form-group p-2">
+                                <label for="niche" class="card-text">Niche</label>
+                                <input type="text" name="niche" class="form-control" required>
+                            </div>
+                            <div class="form-group p-2">
+                                <label for="reach" class="card-text">Reach</label>
+                                <input type="text" name="reach" class="form-control" required>
+                            </div>
                         </div>
-                        <div class="form-group p-2">
-                            <label for="niche" class="card-text">Niche</label>
-                            <input type="text" name="niche" class="form-control" required>
+                    
+                        <div id="sponsor-fields" style="display: none;">
+                            <div class="form-group p-2">
+                                <label for="budget" class="card-text">Budget</label>
+                                <input type="number" name="budget" class="form-control" min="0" required>
+                            </div>
+                            <div class="form-group p-2">
+                                <label for="industry" class="card-text">Industry</label>
+                                <input type="text" name="industry" class="form-control" required>
+                            </div>
                         </div>
-                        <div class="form-group p-2">
-                            <label for="reach" class="card-text">Reach</label>
-                            <input type="text" name="reach" class="form-control" required>
-                        </div>
-                    </div>
 
-                    <div id="sponsor_fields" class="d-none">
-                        <div class="form-group p-2">
-                            <label for="budget" class="card-text">Budget</label>
-                            <input type="number" name="budget" class="form-control" min="0" required>
-                        </div>
-                        <div class="form-group p-2">
-                            <label for="industry" class="card-text">Industry</label>
-                            <input type="text" name="industry" class="form-control" required>
-                        </div>
-                    </div>
 
                     <div class="form-group mt-3 p-2">
                         <button type="submit" class="btn btn-primary">Register</button>
@@ -71,9 +72,30 @@
     <script>
         document.getElementById('user_type').addEventListener('change', function() {
             var userType = this.value;
-            document.getElementById('influencer_fields').classList.toggle('d-none', userType !== 'influencer');
-            document.getElementById('sponsor_fields').classList.toggle('d-none', userType !== 'sponsor');
+            var influencerFields = document.getElementById('influencer-fields');
+            var sponsorFields = document.getElementById('sponsor-fields');
+            
+            if (userType === 'influencer') {
+                influencerFields.style.display = 'block';
+                sponsorFields.style.display = 'none';
+                setRequiredFields(influencerFields, true);
+                setRequiredFields(sponsorFields, false);
+            } else {
+                influencerFields.style.display = 'none';
+                sponsorFields.style.display = 'block';
+                setRequiredFields(influencerFields, false);
+                setRequiredFields(sponsorFields, true);
+            }
         });
+
+        function setRequiredFields(container, isRequired) {
+            var inputs = container.getElementsByTagName('input');
+            for (var i = 0; i < inputs.length; i++) {
+                inputs[i].required = isRequired;
+            }
+        }
+
+        // Trigger the change event on page load to set the initial state
         document.getElementById('user_type').dispatchEvent(new Event('change'));
     </script>
 {% endblock %}

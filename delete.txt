@@ -1,1 +1,91 @@
-budget has to be greater than 0
+### Segregation of Functionalities by Role
+
+---
+
+#### **Sponsor Functionalities**
+
+##### **Core**
+1. Sponsor login and registration.
+2. Create, update, and delete campaigns.
+   - Campaign fields: name, description, start_date, end_date, budget, visibility, goals.
+3. Track individual campaigns.
+4. Send ad requests to influencers for public campaigns.
+5. Accept ad requests from influencers.
+6. Search for influencers based on niche, reach, and followers.
+7. Maintain sponsor profiles (Company/Individual name, industry, budget).
+
+##### **Recommended**
+1. API resources to manage campaigns and ad requests.
+2. Frontend validation for forms (e.g., campaign creation, ad requests).
+3. Backend validation for sponsor-related features.
+
+##### **Optional**
+1. Dummy payment portal for sponsors to process payments for ad requests.
+2. Additional profile features or campaign filters.
+
+---
+
+#### **Influencer Functionalities**
+
+##### **Core**
+1. Influencer login and registration.
+2. Update influencer profile (name, category, niche, reach).
+3. Search for public campaigns based on niche, budget, etc.
+4. View, accept, or reject ad requests.
+5. Negotiate terms and resend modified ad requests back to sponsors.
+
+##### **Recommended**
+1. API resources for influencers to manage ad requests and profile updates.
+2. Frontend validation on forms (e.g., ad request negotiation).
+3. Backend validation for influencer-related features.
+
+##### **Optional**
+1. Additional profile customization options.
+2. Filtering public campaigns based on multiple criteria.
+
+---
+
+#### **Admin Functionalities**
+
+##### **Core**
+1. Admin login with root access.
+2. Monitor all users (sponsors, influencers) and campaigns.
+3. View statistics: active users, campaigns (public/private), ad requests, flagged sponsors/influencers.
+4. Flag inappropriate campaigns/users.
+
+##### **Recommended**
+1. API resources to monitor and flag users, campaigns, and ad requests.
+2. External libraries (e.g., ChartJS) for visualizing application statistics.
+3. Frontend validation for admin actions.
+4. Backend validation for admin functionalities.
+
+##### **Optional**
+1. Create advanced analytics dashboards with more detailed statistics.
+2. Customize admin views to improve monitoring capabilities.
+
+---
+
+### **Core Functionalities (For All Roles)**
+1. Login and registration for sponsors, influencers, and admin.
+2. Ability to distinguish between user types in the database.
+3. Campaign management (create, update, delete campaigns).
+4. Ad request management (create, update, delete ad requests).
+5. Search functionality (sponsors search influencers, influencers search public campaigns).
+
+---
+
+### **Recommended Functionalities (Cross-role)**
+1. API resources for users, ad requests, and campaigns.
+2. Frontend validation using HTML5 or JavaScript.
+3. Backend validation for form inputs and user actions.
+
+---
+
+### **Optional Functionalities (Cross-role)**
+1. Styling and aesthetics using CSS or Bootstrap.
+2. Secure login system with Flask extensions like `flask_login` or `flask_security`.
+3. Additional features and customization depending on project needs.
+
+---
+
+This structure organizes the core, recommended, and optional functionalities by the user roles (Sponsor, Influencer, Admin).

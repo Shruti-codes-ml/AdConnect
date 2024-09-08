@@ -1,0 +1,60 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Search Influencers
+{% endblock %}
+
+{% block content %}
+<div class="p-4 bg-white bg-opacity-75 rounded shadow mt-3">
+    <h1 class="display-1">Search Influencers</h1>
+    <form action="{{ url_for('search_influencer_post')}}" method="POST">
+        <div class="d-flex gap-5">
+            <label for="category">Category</label>
+            <select name="category" class="form-select">
+                <option value=""></option>
+                {% for category in categories %}
+                    <option value="{{category}}">{{category}}</option>
+                {% endfor %}
+            </select>
+
+            <label for="niche">Niche</label>
+            <select name="niche" class="form-select">
+                <option value=""></option>
+                {% for niche in niches %}
+                    <option value="{{niche}}">{{niche}}</option>
+                {% endfor %}
+            </select>
+
+            <label for="reach">Reach</label>
+            <input type="text" name="reach" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <td>Name</td>
+                <td>Category</td>
+                <td>Niche</td>
+                <td>Reach</td>
+                <td>View</td>
+            </tr>
+        </thead>
+        <tbody>
+            {% for influencer in influencers %}
+                <tr>
+                    <td>{{influencer.name}}</td>
+                    <td>{{influencer.category}}</td>
+                    <td>{{influencer.niche}}</td>
+                    <td>{{influencer.reach}}</td>
+                    <td><a href="{{url_for('view_influencer', id=influencer.id)}}" class="btn btn-success"><i class="fa-solid fa-eye"></i> View</a></td>
+                    </td>
+                </tr>
+            {% else %}
+                <h3 class="display-3">No influencers found.</h3>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

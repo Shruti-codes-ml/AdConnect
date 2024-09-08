@@ -1,0 +1,44 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    View Influencer Profile
+{% endblock %}
+
+{% block content %}
+    <div class="container d-flex justify-content-center align-items-center mt-5">
+        <div class="col-md-8 d-inline-block p-4 bg-white bg-opacity-75 rounded shadow">
+        
+            <div class="card p-4 bg-white bg-opacity-75">
+                <h1 class="card-title">Influencer Profile</h1>
+                <form action="{{  url_for('create_ad_request',influencer_id = influencer.id)  }}" method="POST">
+                    
+                    <div class="form-group p-2">
+                        <label for="username" class="card-text">Username</label>
+                        <input type="text" name="username" class="form-control" value="{{influencer.username}}" readonly>
+                    </div>
+                    <div class="form-group p-2">
+                        <label for="name" class="card-text">Name</label>
+                        <input type="text" name="name" class="form-control" value="{{influencer.name}}" readonly>
+                    </div>
+                    <div class="form-group p-2">
+                        <label for="category" class="card-text">Category</label>
+                        <input type="text" name="category" class="form-control" value="{{influencer.category}}" readonly>
+                    </div>
+                    <div class="form-group p-2">
+                        <label for="niche" class="card-text">Niche</label>
+                        <input type="text" name="niche" class="form-control" value="{{influencer.niche}}" readonly>
+                    </div>
+                    <div class="form-group p-2">
+                        <label for="reach" class="card-text">Reach</label>
+                        <input type="text" name="reach" class="form-control" value="{{influencer.reach}}" readonly>
+                    </div>
+
+                    
+                    <div class="form-group mt-3 p-2">
+                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Create ad request</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
