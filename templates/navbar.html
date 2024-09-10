@@ -14,9 +14,6 @@
               <a class="nav-link" href="{{ url_for('register')  }}">Register</a>
             </li>
           {% else %}
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('profile')  }}">Profile</a>
-            </li>
             {% if session['user_type'] == 'sponsor' %}
               <li class="nav-item"></li>
                 <a class="nav-link" href="{{ url_for('sponsor_home')  }}">Home</a>
@@ -26,6 +23,9 @@
                 <a class="nav-link" href="{{ url_for('influencer_home')  }}">Home</a>
               </li>
             {% endif %}
+            <li class="nav-item"></li>
+              <a class="nav-link" href="{{ url_for('profile')  }}">Profile</a>
+            </li>
           {% endif %}
         </ul>
       </div>

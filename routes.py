@@ -143,7 +143,7 @@ def register_post():
         return redirect(url_for('register'))
     if not name or not name.isalpha():
         flash("Error : Name should contain only alphabetic characters")
-        return redirect(url_for('profile'))
+        return redirect(url_for('register'))
     if user_type == "influencer":
         additional_fields = {"category": request.form.get("category"), "niche": request.form.get("niche"), "reach" : request.form.get("reach")}
         user_class = Influencer
@@ -599,6 +599,7 @@ def view_influencer(id):
     influencer = Influencer.query.get(id)
     return render_template('/sponsor/view_influencer.html',influencer = influencer)
 
+@app.route("/sponsor/create_ad_request", defaults = {'influencer_id' : None})
 @app.route("/sponsor/create_ad_request/<int:influencer_id>")
 @sponsor_required
 def create_ad_request(influencer_id):
@@ -607,6 +608,7 @@ def create_ad_request(influencer_id):
     influencers = Influencer.query.all()
     return render_template('/sponsor/create_ad_request.html',campaigns=campaigns, influencers=influencers,influencer_id=influencer_id)
 
+@app.route("/sponsor/create_ad_request", defaults = {'influencer_id' : None},methods=['POST'])
 @app.route("/sponsor/create_ad_request/<int:influencer_id>", methods=['POST'])
 @sponsor_required
 def create_ad_request_post(influencer_id):

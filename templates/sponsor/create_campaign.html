@@ -11,6 +11,10 @@
             <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Create Campaign</button>
 
             <a href="{{  url_for('show_campaigns',sponsor_id = sponsor.id)  }}" class="btn btn-secondary"><i class="fa-solid fa-list"></i> Show Campaigns</a>
+
+            <a href="{{  url_for('search_influencer')  }}" class="btn btn-info"><i class="fa-solid fa-magnifying-glass"></i> Search Influencers</a>
+        
+            <a href="{{ url_for('create_ad_request') }}" class="btn btn-info"><i class="fa-solid fa-plus"></i> Create Ad Request</a>
         </div>
     </div>
     <form action="{{  url_for('create_campaign_post', sponsor_id = sponsor.id)  }}" method="POST" class="p-4 bg-white bg-opacity-75 rounded shadow mt-3">

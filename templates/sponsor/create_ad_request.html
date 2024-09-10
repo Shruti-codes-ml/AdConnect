@@ -21,7 +21,7 @@
                 <label for="influencer_name" class="form-label">Influencer Name</label>
                 <select name="influencer_id" class="form-select">
                     {% for influencer in influencers %}
-                        {% if influencer.id == influencer_id %}
+                        {% if influencer_id is not none and influencer.id == influencer_id %}
                             <option value="{{influencer.id}}" selected>{{influencer.name}}</option>
                         {% else %}
                             <option value="{{influencer.id}}">{{influencer.name}}</option>
