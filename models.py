@@ -62,7 +62,7 @@ class AdRequest(db.Model):
     messages = db.Column(db.Text)
     requirements = db.Column(db.Text)
     payment_amount = db.Column(db.Integer)
-    status = db.Column(db.String(64), nullable=False, default='pending')  # Could be 'Pending', 'Accepted', 'Rejected'
+    status = db.Column(db.String(64), nullable=False, default='Pending')  # Could be 'Pending', 'Accepted', 'Rejected'
     sponsor_accepted = db.Column(db.Boolean, default=None)
     influencer_accepted = db.Column(db.Boolean, default=None)
     

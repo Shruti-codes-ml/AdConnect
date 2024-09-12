@@ -24,6 +24,7 @@
                     <td>Message</td>
                     <td>Requirement</td>
                     <td>Payment</td>
+                    <td>Status</td>
                     <td>Actions</td>
                 </tr>
             </thead>
@@ -35,7 +36,7 @@
                         <td>{{ad_request.messages}}</td>
                         <td>{{ad_request.requirements}}</td>
                         <td>{{ad_request.payment_amount}}</td>
-                        
+                        <td>{{ ad_request.status }}</td>
                         <td>
                             {% if ad_request.sponsor_accepted == True and ad_request.influencer_accepted == True%}
                                 <button class="btn btn-success" disabled><i class="fa-solid fa-money-bill"></i> Awaiting Payment </button>
@@ -50,11 +51,10 @@
                                 <form action="{{url_for('influencer_reject_request', influencer_id=influencer.id, request_id = ad_request.id)}}" method="post">
                                     <button class="btn btn-danger"><i class="fa-regular fa-circle-xmark"></i> Reject</button>
                                 </form>
-                                <form action="" method="post"></form>
+                                <form action="{{url_for('negotiate_ad_request_influencer', influencer_id=influencer.id, ad_request_id = ad_request.id)}}" method="post">
                                     <button class="btn btn-info"><i class="fa-regular fa-handshake"></i> Negotiate</button>
                                 </form>
                             {% endif %}
-                            
                         </td>
                     </tr>
                 {% endfor %}

@@ -553,6 +553,11 @@ def sponsor_accept_request(sponsor_id,request_id):
         return redirect(url_for('sponsor_home'))
     
     ad_request.sponsor_accepted = True
+    if ad_request.sponsor_accepted == True and ad_request.influencer_accepted == True:
+        ad_request.status = 'Accepted'
+    if ad_request.sponsor_accepted == False or ad_request.influencer_accepted == False:
+        ad_request.status = 'Rejected'
+
     db.session.commit()
     flash("Ad Request accepted successfully")
     return redirect(url_for('sponsor_home'))
@@ -586,10 +591,54 @@ def sponsor_reject_request(sponsor_id,request_id):
         return redirect(url_for('sponsor_home'))
     
     ad_request.sponsor_accepted = False
+
+    if ad_request.sponsor_accepted == True and ad_request.influencer_accepted == True:
+        ad_request.status = 'Accepted'
+    if ad_request.sponsor_accepted == False or ad_request.influencer_accepted == False:
+        ad_request.status = 'Rejected'
+
     db.session.commit()
     flash("Ad Request rejected")
     return redirect(url_for('sponsor_home'))
-##################################### influencer functions
+
+@app.route("/sponsor/<int:sponsor_id>/negotiate_ad_request_sponsor/<int:ad_request_id>")
+def negotiate_ad_request_sponsor(sponsor_id,ad_request_id):
+    sponsor = Sponsor.query.get(sponsor_id)
+    if not sponsor:
+        flash("Error : Sponsor does not exist")
+        return redirect(url_for('sponsor_home'))
+    ad_request = AdRequest.query.get(ad_request_id)
+    if not ad_request:
+        flash("Error : Ad Request does not exist")
+        return redirect(url_for('sponsor_home'))
+    
+    return render_template("/sponsor/negotiate_ad_request.html", sponsor=sponsor,ad_request=ad_request)
+
+@app.route("/sponsor/<int:sponsor_id>/negotiate_ad_request_sponsor/<int:ad_request_id>", methods=['POST'])
+def negotiate_ad_request_sponsor_post(sponsor_id,ad_request_id):
+    sponsor = Sponsor.query.get(sponsor_id)
+    if not sponsor:
+        flash("Error : Sponsor does not exist")
+        return redirect(url_for('sponsor_home'))
+    ad_request = AdRequest.query.get(ad_request_id)
+    if not ad_request:
+        flash("Error : Ad Request does not exist")
+        return redirect(url_for('sponsor_home'))
+    
+    if not ad_request.campaign:
+        flash("Error : Campaign does not exist or has ended")
+        return redirect(url_for('sponsor_home'))
+    
+    messages = request.form.get('messages')
+    if not messages:
+        flash("Error : Message cannot be empty")
+        return redirect(url_for('sponsor_home'))
+    
+    ad_request.messages = messages
+    db.session.commit()
+    flash("Message sent successfully")
+    return redirect(url_for('show_ad_requests_sponsor', sponsor_id = sponsor.id))
+# #################################### influencer functions
 
 @app.route("/profile/influencer/update",methods=["POST"])
 @influencer_required
@@ -741,6 +790,12 @@ def influencer_accept_request(influencer_id,request_id):
         flash("Error : Sponsor does not exist")
 
     ad_request.influencer_accepted = True
+
+    if ad_request.sponsor_accepted == True and ad_request.influencer_accepted == True:
+        ad_request.status = 'Accepted'
+    if ad_request.sponsor_accepted == False or ad_request.influencer_accepted == False:
+        ad_request.status = 'Rejected'
+
     db.session.commit()
     flash("Ad Request accepted successfully")
     return redirect(url_for('influencer_home'))
@@ -773,7 +828,51 @@ def influencer_reject_request(influencer_id,request_id):
         flash("Error : Sponsor does not exist")
         return redirect(url_for('influencer_home'))
     ad_request.influencer_accepted = False
+
+    if ad_request.sponsor_accepted == True and ad_request.influencer_accepted == True:
+        ad_request.status = 'Accepted'
+    if ad_request.sponsor_accepted == False or ad_request.influencer_accepted == False:
+        ad_request.status = 'Rejected'
+
     db.session.commit()
     flash("Ad Request rejected")
     return redirect(url_for('influencer_home'))
-           
+
+@app.route("/influencer/<int:influencer_id>/negotiate_ad_request_influencer/<int:ad_request_id>")
+def negotiate_ad_request_influencer(influencer_id,ad_request_id):
+    influencer = Influencer.query.get(influencer_id)
+    if not influencer:
+        flash("Error : Influencer does not exist")
+        return redirect(url_for('influencer_home'))
+    ad_request = AdRequest.query.get(ad_request_id)
+    if not ad_request:
+        flash("Error : Ad Request does not exist")
+        return redirect(url_for('influencer_home'))
+    
+    return render_template("/influencer/negotiate_ad_request.html", influencer=influencer,ad_request=ad_request)
+
+@app.route("/influencer/<int:influencer_id>/negotiate_ad_request_influencer/<int:ad_request_id>", methods=['POST'])
+def negotiate_ad_request_influencer_post(influencer_id,ad_request_id):
+    influencer = Influencer.query.get(influencer_id)
+    if not influencer:
+        flash("Error : Influencer does not exist")
+        return redirect(url_for('influencer_home'))
+    ad_request = AdRequest.query.get(ad_request_id)
+    if not ad_request:
+        flash("Error : Ad Request does not exist")
+        return redirect(url_for('influencer_home'))
+    
+    if not ad_request.campaign:
+        flash("Error : Campaign does not exist or has ended")
+        return redirect(url_for('influencer_home'))
+    
+    messages = request.form.get('messages')
+    if not messages:
+        flash("Error : Message cannot be empty")
+        return redirect(url_for('influencer_home'))
+    
+    ad_request.messages = messages
+    db.session.commit()
+    flash("Message sent successfully")
+    return redirect(url_for('show_ad_requests_influencer', influencer_id = influencer.id))
+   
