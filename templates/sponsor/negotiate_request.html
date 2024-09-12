@@ -1,14 +1,14 @@
 {% extends 'layout.html' %}
 
 {% block title %}
-    Create Ad Request
+    Negotiate Ad Request
 {% endblock %}
 
 {% block content %}
     <div class="p-4 bg-white bg-opacity-75 rounded shadow mt-3">
-       <h1 class="display-1">Create Ad Request</h1>
+       <h1 class="display-1">Negotiate Ad Request</h1>
 
-       <form action="{{url_for('create_ad_request_post', influencer_id = influencer_id)}}" method="POST">
+       <form action="{{url_for('sponsor_negotiate_post', influencer_id = influencer_id)}}" method="POST">
             <div class="form-group p-2">
                 <label for="campaign_name" class="form-label">Campaign Name</label>
                 <select name="campaign_id" class="form-select">

@@ -6,6 +6,7 @@ from models import db, Influencer, Sponsor, Admin, Campaign, AdRequest
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from datetime import datetime
+from sqlalchemy import desc
 
 @app.route("/")
 def index():
@@ -336,7 +337,7 @@ def create_campaign_post(sponsor_id):
 @app.route("/sponsor/<int:sponsor_id>/show_campaigns")
 @sponsor_required
 def show_campaigns(sponsor_id):
-    campaigns = Campaign.query.filter_by(sponsor_id = sponsor_id).all()
+    campaigns = Campaign.query.filter_by(sponsor_id = sponsor_id).order_by(desc(Campaign.id)).all()
     sponsor = Sponsor.query.filter_by(id=sponsor_id).first()
     return render_template("sponsor/show_campaigns.html", campaigns = campaigns,sponsor = sponsor)
 
@@ -507,6 +508,7 @@ def create_ad_request_post(influencer_id):
         messages = messages,
         requirements = requirements,
         payment_amount = payment_amount,
+        sponsor_accepted = True,
         status = "pending"
     )
     db.session.add(ad_request)
@@ -518,7 +520,7 @@ def create_ad_request_post(influencer_id):
 @sponsor_required
 def show_ad_requests_sponsor(sponsor_id):
     sponsor = Sponsor.query.filter_by(id = sponsor_id).first()
-    ad_requests = AdRequest.query.filter_by(sponsor_id = sponsor.id).all()
+    ad_requests = AdRequest.query.filter_by(sponsor_id = sponsor.id).order_by(desc(AdRequest.sponsor_accepted)).all()
     return render_template('/sponsor/show_ad_requests.html', sponsor=sponsor, ad_requests = ad_requests)
 
 @app.route('/sponsor/<int:sponsor_id>/sponsor_accept_request/<int:request_id>',methods=["POST"])
@@ -539,6 +541,16 @@ def sponsor_accept_request(sponsor_id,request_id):
     if ad_request.sponsor_id != sponsor_id:
         flash("Error : Ad Request does not exist")
         return redirect(url_for("sponsor_home"))
+    
+    campaign = Campaign.query.filter_by(id=ad_request.campaign_id).first()
+    if not campaign : 
+        flash("Error : Campaign does not exist or has ended")
+        return redirect(url_for('sponsor_home'))
+    
+    influencer = Influencer.query.filter_by(id=ad_request.influencer_id).first()
+    if not influencer:
+        flash("Error : Influencer does not exist")
+        return redirect(url_for('sponsor_home'))
     
     ad_request.sponsor_accepted = True
     db.session.commit()
@@ -563,11 +575,20 @@ def sponsor_reject_request(sponsor_id,request_id):
         flash("Error : Ad Request does not exist")
         return redirect(url_for("sponsor_home"))
     
+    campaign = Campaign.query.filter_by(id=ad_request.campaign_id).first()
+    if not campaign : 
+        flash("Error : Campaign does not exist or has ended")
+        return redirect(url_for('sponsor_home'))
+    
+    influencer = Influencer.query.filter_by(id=ad_request.influencer_id).first()
+    if not influencer:
+        flash("Error : Influencer does not exist")
+        return redirect(url_for('sponsor_home'))
+    
     ad_request.sponsor_accepted = False
     db.session.commit()
     flash("Ad Request rejected")
     return redirect(url_for('sponsor_home'))
-
 ##################################### influencer functions
 
 @app.route("/profile/influencer/update",methods=["POST"])
@@ -672,20 +693,20 @@ def influencer_home():
 @influencer_required
 def show_ad_requests(influencer_id):
     influencer = Influencer.query.filter_by(id=influencer_id).first()
-    ad_requests = AdRequest.query.filter_by(influencer_id=influencer_id).all()
+    ad_requests = AdRequest.query.filter_by(influencer_id=influencer_id).order_by(desc(AdRequest.influencer_accepted)).all()
     return render_template("/influencer/show_ad_requests.html", influencer = influencer, ad_requests = ad_requests)
 
 @app.route('/influencer/<int:influencer_id>/search_campaigns')
 @influencer_required
 def search_campaigns(influencer_id):
     influencer = Influencer.query.filter_by(id=influencer_id).first()
-    campaigns = Campaign.query.filter_by(visibility = "public").all()
+    campaigns = Campaign.query.filter_by(visibility = "public").order_by(Campaign.id).all()
     return render_template("/influencer/search_campaigns.html", campaigns = campaigns, influencer = influencer)
 
 @app.route('/influencer/<int:influencer_id>/<int:campaign_id>/<int:sponsor_id>/interested_campaign', methods=['POST'])
 @influencer_required
 def interested_campaign(campaign_id, sponsor_id,influencer_id):
-    adrequest = AdRequest(campaign_id = campaign_id, sponsor_id = sponsor_id, influencer_id = influencer_id, messages="I am interested")
+    adrequest = AdRequest(campaign_id = campaign_id, sponsor_id = sponsor_id, influencer_id = influencer_id,influencer_accepted=True, messages="I am interested")
     db.session.add(adrequest)
     db.session.commit()
     flash("Ad Request sent successfully")
@@ -710,6 +731,15 @@ def influencer_accept_request(influencer_id,request_id):
         flash("Error : Ad Request does not exist")
         return redirect(url_for("influencer_home"))
     
+    campaign = Campaign.query.filter_by(id=ad_request.campaign_id).first()
+    if not campaign : 
+        flash("Error : Campaign does not exist or has ended")
+        return redirect(url_for('influencer_home'))
+    
+    sponsor = Sponsor.query.filter_by(id=ad_request.sponsor_id).first()
+    if not sponsor:
+        flash("Error : Sponsor does not exist")
+
     ad_request.influencer_accepted = True
     db.session.commit()
     flash("Ad Request accepted successfully")
@@ -733,7 +763,15 @@ def influencer_reject_request(influencer_id,request_id):
     if ad_request.influencer_id != influencer_id:
         flash("Error : Ad Request does not exist")
         return redirect(url_for("influencer_home"))
-
+    campaign = Campaign.query.filter_by(id=ad_request.campaign_id).first()
+    if not campaign : 
+        flash("Error : Campaign does not exist or has ended")
+        return redirect(url_for('influencer_home'))
+    
+    sponsor = Sponsor.query.filter_by(id=ad_request.sponsor_id).first()
+    if not sponsor:
+        flash("Error : Sponsor does not exist")
+        return redirect(url_for('influencer_home'))
     ad_request.influencer_accepted = False
     db.session.commit()
     flash("Ad Request rejected")

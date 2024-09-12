@@ -37,20 +37,22 @@
                         <td>{{ad_request.payment_amount}}</td>
                         
                         <td>
-                            {% if ad_request.sponsor_accepted and ad_request.influencer_accepted %}
+                            {% if ad_request.sponsor_accepted == True and ad_request.influencer_accepted == True%}
                                 <button class="btn btn-success" disabled><i class="fa-solid fa-money-bill"></i> Awaiting Payment </button>
-                            {% elif ad_request.influencer_accepted %}
+                            {% elif ad_request.influencer_accepted == True %}
                                 <button class="btn btn-success" disabled><i class="fa-regular fa-circle-check"></i> Accepted </button>
-                            {% elif not ad_request.influencer_accepted %}
+                            {% elif ad_request.influencer_accepted == False %}
                                 <button class="btn btn-danger" disabled><i class="fa-regular fa-circle-xmark"></i> Rejected </button>
                             {% else %}
                                 <form action="{{url_for('influencer_accept_request', influencer_id=influencer.id, request_id = ad_request.id)}}" method="post">
                                     <button class="btn btn-success"><i class="fa-regular fa-circle-check"></i> Accept</button>
                                 </form>
                                 <form action="{{url_for('influencer_reject_request', influencer_id=influencer.id, request_id = ad_request.id)}}" method="post">
-                                    <button class="btn btn-success"><i class="fa-regular fa-circle-xmark"></i> Reject</button>
+                                    <button class="btn btn-danger"><i class="fa-regular fa-circle-xmark"></i> Reject</button>
                                 </form>
-                           Negotiate
+                                <form action="" method="post"></form>
+                                    <button class="btn btn-info"><i class="fa-regular fa-handshake"></i> Negotiate</button>
+                                </form>
                             {% endif %}
                             
                         </td>
@@ -58,5 +60,8 @@
                 {% endfor %}
             </tbody>
         </table>
+        <div class="form-group p-2"></div>
+            <a href="{{ url_for('influencer_home') }}" class="btn btn-info"><i class="fa fa-arrow-circle-left"></i> Go Back</a>
+        </div>
     </div>
 {% endblock %}
