@@ -67,54 +67,6 @@ def is_valid_password(password):
         return "Password must contain at least one special character (@#$%^&+=)"
     return None
 
-# @app.route("/register", methods=["POST"])
-# def register_post():
-#     user_type = request.form.get("user_type")
-#     username = request.form.get("username")
-#     password = request.form.get("password")
-#     confirm_password = request.form.get("confirm_password")
-#     name = request.form.get("name")
-
-#     if user_type == "influencer" : 
-#         category = request.form.get("category")
-#         niche = request.form.get("niche")
-#         if not username or not password or not confirm_password or not category or not niche : 
-#             flash("Error : Please fill all required fields")
-#             return redirect(url_for('register'))
-#         if password != confirm_password:
-#             flash("Error : Passwords do not match")
-#             return redirect(url_for('register'))
-
-#         influencer = Influencer.query.filter_by(username = username).first()
-#         if influencer : 
-#             flash("Error : Username already taken")
-#             return redirect(url_for('register'))
-#         new_influencer = Influencer(username = username, passhash = generate_password_hash(password),name=name, category = category, niche=niche)
-#         db.session.add(new_influencer)
-#         db.session.commit()
-#         flash("Influencer successfully registered")
-#         return redirect(url_for('index'))
-#     if user_type == "sponsor" :
-#         budget = request.form.get("budget")
-#         industry = request.form.get("industry")
-
-#         if not username or not password or not confirm_password or not budget or not industry : 
-#             flash("Error : Please fill all required fields")
-#             return redirect(url_for('register'))
-#         if password != confirm_password:
-#             flash("Error : Passwords do not match")
-#             return redirect(url_for('register'))
-
-#         sponsor = Sponsor.query.filter_by(username = username).first()
-#         if sponsor : 
-#             flash("Error : Username already taken")
-#             return redirect(url_for('register'))
-#         new_sponsor = Sponsor(username = username, passhash = generate_password_hash(password),name=name, budget = budget, industry = industry)
-#         db.session.add(new_sponsor)
-#         db.session.commit()
-#         flash("Sponsor successfully registered")
-#         return redirect(url_for('index'))
-
 @app.route("/register", methods=["POST"])
 def register_post():
     user_type = request.form.get("user_type")
@@ -314,106 +266,12 @@ def update_profile_sponsor():
         flash("Error : Verify password to make changes to profile")
         return redirect(url_for('profile'))
 
-
-@app.route("/profile/influencer/update",methods=["POST"])
-@influencer_required
-def update_profile_influencer():
-    username = request.form.get('username')
-    password = request.form.get('current_password')
-    new_password = request.form.get('new_password')
-    confirm_new_password = request.form.get('confirm_new_password')
-    name = request.form.get('name')
-    category = request.form.get('category')
-    niche = request.form.get('niche')
-    reach = request.form.get('reach')
-
-    updated_fields = []
-    if not session['user_type'] == 'influencer':
-        flash("Error : You are not authorized to update influencer details")
-        return redirect(url_for('profile'))
-
-    influencer = Influencer.query.filter_by(id = session['id']).first()
-    if password:
-        if check_password_hash(influencer.passhash , password):
-            if username and influencer.username != username:
-                if Influencer.query.filter_by(username = username).first():
-                    flash("Error : Username already exists.")
-                    return redirect(url_for('profile'))
-                elif len(username) < 3 or len(username) > 20:
-                    flash("Error: Username must be between 3 and 20 characters")
-                    return redirect(url_for('profile'))
-                if not username.isalnum():
-                    flash("Error: Username must contain only letters and numbers")
-                    return redirect(url_for('profile'))
-                else:
-                    influencer.username = username
-                    updated_fields.append("Username")
-                    
-            if new_password or confirm_new_password: 
-                if password != new_password and new_password == confirm_new_password:
-                    password_error = is_valid_password(new_password)
-                    if password_error:
-                        flash(f"Error : {password_error}")
-                        return redirect(url_for('profile'))
-                    else:
-                        influencer.passhash = generate_password_hash(new_password)
-                        updated_fields.append("Password")
-                else:
-                    flash("Error : New password must be different from the current password and confirm password should match")
-                    return redirect(url_for('profile'))
-            
-            if name and influencer.name != name:
-                if not re.match("^[A-Za-z\s]+$", name):
-                    flash("Error : Name should contain only alphabetic characters")
-                    return redirect(url_for('profile'))
-                influencer.name = name
-                updated_fields.append("Name")
-
-            if category and influencer.category != category:
-                if not category.isalpha():
-                    flash("Error : Category must have only alphabetic characters")
-                    return redirect(url_for('profile'))
-                influencer.category = category
-                updated_fields.append("Category")
-            if niche and influencer.niche != niche:
-                if not niche.isalpha():
-                    flash("Error : Niche should have all alphabetic characters")
-                    return redirect(url_for('profile'))
-                influencer.niche = niche
-                updated_fields.append("Niche")
-            if reach and str(influencer.reach) != reach:
-                try:
-                    float(reach)
-                except ValueError:
-                    flash("Error : Reach should be a number")
-                    return redirect(url_for('profile'))
-                influencer.reach = reach
-                updated_fields.append("Reach")
-            if updated_fields:
-                db.session.commit()
-                flash(f"{', '.join(updated_fields)} updated successfully!")
-            else:
-                flash("No new changes made")
-            return redirect(url_for('profile'))
-        else:
-            flash("Error : Password is incorrect")
-            return redirect(url_for('profile'))
-    else:
-        flash("Error : Verify password to make changes to profile")
-        return redirect(url_for('profile'))
-
-
 @app.route("/sponsor/home")
 @sponsor_required
 def sponsor_home():
     sponsor = Sponsor.query.filter_by(id=session['id']).first()
     return render_template('/sponsor/sponsor_home.html',sponsor = sponsor)
 
-@app.route("/influencer/home")
-@influencer_required
-def influencer_home():
-    influencer = Influencer.query.filter_by(id=session['id']).first()
-    return "Welcome influencer"
 
 @app.route("/sponsor/<int:sponsor_id>/create_campaign")
 @sponsor_required
@@ -649,9 +507,235 @@ def create_ad_request_post(influencer_id):
         messages = messages,
         requirements = requirements,
         payment_amount = payment_amount,
-        status = "Pending"
+        status = "pending"
     )
     db.session.add(ad_request)
     db.session.commit()
     flash("Ad Request sent successfully")
     return redirect(url_for('sponsor_home'))
+
+@app.route('/sponsor/<int:sponsor_id>/show_ad_requests_sponsor')
+@sponsor_required
+def show_ad_requests_sponsor(sponsor_id):
+    sponsor = Sponsor.query.filter_by(id = sponsor_id).first()
+    ad_requests = AdRequest.query.filter_by(sponsor_id = sponsor.id).all()
+    return render_template('/sponsor/show_ad_requests.html', sponsor=sponsor, ad_requests = ad_requests)
+
+@app.route('/sponsor/<int:sponsor_id>/sponsor_accept_request/<int:request_id>',methods=["POST"])
+@sponsor_required
+def sponsor_accept_request(sponsor_id,request_id):
+    sponsor = Sponsor.query.get(sponsor_id)
+    ad_request = AdRequest.query.get(request_id)
+    if not sponsor:
+        flash("Error : Sponsor does not exist")
+        return redirect(url_for('login'))
+    if not (session['user_type']=='sponsor' and session['id']==sponsor_id):
+        flash("Error : You are not authorized to access this page")
+        return redirect(url_for('sponsor_home'))
+    if not ad_request:
+        flash("Error : Ad Request does not exist")
+        return redirect(url_for('sponsor_home'))
+    
+    if ad_request.sponsor_id != sponsor_id:
+        flash("Error : Ad Request does not exist")
+        return redirect(url_for("sponsor_home"))
+    
+    ad_request.sponsor_accepted = True
+    db.session.commit()
+    flash("Ad Request accepted successfully")
+    return redirect(url_for('sponsor_home'))
+
+@app.route('/sponsor/<int:sponsor_id>/sponsor_reject_request/<int:request_id>',methods=["POST"])
+@sponsor_required
+def sponsor_reject_request(sponsor_id,request_id):
+    sponsor = Sponsor.query.get(sponsor_id)
+    ad_request = AdRequest.query.get(request_id)
+    if not sponsor:
+        flash("Error : Sponsor does not exist")
+        return redirect(url_for('login'))
+    if not (session['user_type']=='sponsor' and session['id']==sponsor_id):
+        flash("Error : You are not authorized to access this page")
+        return redirect(url_for('sponsor_home'))
+    if not ad_request:
+        flash("Error : Ad Request does not exist")
+        return redirect(url_for('sponsor_home'))
+    if ad_request.sponsor_id != sponsor_id:
+        flash("Error : Ad Request does not exist")
+        return redirect(url_for("sponsor_home"))
+    
+    ad_request.sponsor_accepted = False
+    db.session.commit()
+    flash("Ad Request rejected")
+    return redirect(url_for('sponsor_home'))
+
+##################################### influencer functions
+
+@app.route("/profile/influencer/update",methods=["POST"])
+@influencer_required
+def update_profile_influencer():
+    username = request.form.get('username')
+    password = request.form.get('current_password')
+    new_password = request.form.get('new_password')
+    confirm_new_password = request.form.get('confirm_new_password')
+    name = request.form.get('name')
+    category = request.form.get('category')
+    niche = request.form.get('niche')
+    reach = request.form.get('reach')
+
+    updated_fields = []
+    if not session['user_type'] == 'influencer':
+        flash("Error : You are not authorized to update influencer details")
+        return redirect(url_for('profile'))
+
+    influencer = Influencer.query.filter_by(id = session['id']).first()
+    if password:
+        if check_password_hash(influencer.passhash , password):
+            if username and influencer.username != username:
+                if Influencer.query.filter_by(username = username).first():
+                    flash("Error : Username already exists.")
+                    return redirect(url_for('profile'))
+                elif len(username) < 3 or len(username) > 20:
+                    flash("Error: Username must be between 3 and 20 characters")
+                    return redirect(url_for('profile'))
+                if not username.isalnum():
+                    flash("Error: Username must contain only letters and numbers")
+                    return redirect(url_for('profile'))
+                else:
+                    influencer.username = username
+                    updated_fields.append("Username")
+                    
+            if new_password or confirm_new_password: 
+                if password != new_password and new_password == confirm_new_password:
+                    password_error = is_valid_password(new_password)
+                    if password_error:
+                        flash(f"Error : {password_error}")
+                        return redirect(url_for('profile'))
+                    else:
+                        influencer.passhash = generate_password_hash(new_password)
+                        updated_fields.append("Password")
+                else:
+                    flash("Error : New password must be different from the current password and confirm password should match")
+                    return redirect(url_for('profile'))
+            
+            if name and influencer.name != name:
+                if not re.match("^[A-Za-z\s]+$", name):
+                    flash("Error : Name should contain only alphabetic characters")
+                    return redirect(url_for('profile'))
+                influencer.name = name
+                updated_fields.append("Name")
+
+            if category and influencer.category != category:
+                if not category.isalpha():
+                    flash("Error : Category must have only alphabetic characters")
+                    return redirect(url_for('profile'))
+                influencer.category = category
+                updated_fields.append("Category")
+            if niche and influencer.niche != niche:
+                if not niche.isalpha():
+                    flash("Error : Niche should have all alphabetic characters")
+                    return redirect(url_for('profile'))
+                influencer.niche = niche
+                updated_fields.append("Niche")
+            if reach and str(influencer.reach) != reach:
+                try:
+                    float(reach)
+                except ValueError:
+                    flash("Error : Reach should be a number")
+                    return redirect(url_for('profile'))
+                influencer.reach = reach
+                updated_fields.append("Reach")
+            if updated_fields:
+                db.session.commit()
+                flash(f"{', '.join(updated_fields)} updated successfully!")
+            else:
+                flash("No new changes made")
+            return redirect(url_for('profile'))
+        else:
+            flash("Error : Password is incorrect")
+            return redirect(url_for('profile'))
+    else:
+        flash("Error : Verify password to make changes to profile")
+        return redirect(url_for('profile'))
+
+@app.route("/influencer/home")
+@influencer_required
+def influencer_home():
+    influencer = Influencer.query.filter_by(id=session['id']).first()
+    return render_template('/influencer/influencer_home.html', influencer = influencer)
+
+# @app.route('/influencer/<int:influencer_id>/create_ad_request_influencer')
+# @influencer_required
+# def create_ad_request_influencer(influencer_id):
+#     return f"Create ad request for {influencer_id}"
+
+@app.route('/influencer/<int:influencer_id>/show_ad_requests')
+@influencer_required
+def show_ad_requests(influencer_id):
+    influencer = Influencer.query.filter_by(id=influencer_id).first()
+    ad_requests = AdRequest.query.filter_by(influencer_id=influencer_id).all()
+    return render_template("/influencer/show_ad_requests.html", influencer = influencer, ad_requests = ad_requests)
+
+@app.route('/influencer/<int:influencer_id>/search_campaigns')
+@influencer_required
+def search_campaigns(influencer_id):
+    influencer = Influencer.query.filter_by(id=influencer_id).first()
+    campaigns = Campaign.query.filter_by(visibility = "public").all()
+    return render_template("/influencer/search_campaigns.html", campaigns = campaigns, influencer = influencer)
+
+@app.route('/influencer/<int:influencer_id>/<int:campaign_id>/<int:sponsor_id>/interested_campaign', methods=['POST'])
+@influencer_required
+def interested_campaign(campaign_id, sponsor_id,influencer_id):
+    adrequest = AdRequest(campaign_id = campaign_id, sponsor_id = sponsor_id, influencer_id = influencer_id, messages="I am interested")
+    db.session.add(adrequest)
+    db.session.commit()
+    flash("Ad Request sent successfully")
+    return redirect(url_for('influencer_home'))
+
+@app.route('/influencer/<int:influencer_id>/influencer_accept_request/<int:request_id>',methods=["POST"])
+@influencer_required
+def influencer_accept_request(influencer_id,request_id):
+    influencer = Influencer.query.get(influencer_id)
+    ad_request = AdRequest.query.get(request_id)
+    if not influencer:
+        flash("Error : Influencer does not exist")
+        return redirect(url_for('login'))
+    if not (session['user_type']=='influencer' and session['id']==influencer_id):
+        flash("Error : You are not authorized to access this page")
+        return redirect(url_for('influencer_home'))
+    if not ad_request:
+        flash("Error : Ad Request does not exist")
+        return redirect(url_for('influencer_home'))
+    
+    if ad_request.influencer_id != influencer_id:
+        flash("Error : Ad Request does not exist")
+        return redirect(url_for("influencer_home"))
+    
+    ad_request.influencer_accepted = True
+    db.session.commit()
+    flash("Ad Request accepted successfully")
+    return redirect(url_for('influencer_home'))
+
+@app.route('/influencer/<int:influencer_id>/influencer_reject_request/<int:request_id>',methods=["POST"])
+@influencer_required
+def influencer_reject_request(influencer_id,request_id):
+    influencer = Influencer.query.get(influencer_id)
+    ad_request = AdRequest.query.get(request_id)
+    if not influencer:
+        flash("Error : Influencer does not exist")
+        return redirect(url_for('login'))
+    if not (session['user_type']=='influencer' and session['id']==influencer_id):
+        flash("Error : You are not authorized to access this page")
+        return redirect(url_for('influencer_home'))
+    if not ad_request:
+        flash("Error : Ad Request does not exist")
+        return redirect(url_for('influencer_home'))
+    
+    if ad_request.influencer_id != influencer_id:
+        flash("Error : Ad Request does not exist")
+        return redirect(url_for("influencer_home"))
+
+    ad_request.influencer_accepted = False
+    db.session.commit()
+    flash("Ad Request rejected")
+    return redirect(url_for('influencer_home'))
+           

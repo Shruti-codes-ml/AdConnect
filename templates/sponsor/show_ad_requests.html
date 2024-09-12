@@ -1,0 +1,70 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Show Ad Requests
+{% endblock %}
+
+{% block content %}
+    <div class="p-4 bg-white bg-opacity-75 rounded shadow mt-3">
+        <h1 class="display-1">Hello @<span class="text-muted">{{  sponsor.username  }}</span></h1>
+        <div class="d-flex gap-5">
+            <div class="d-flex gap-5">
+                <a href="{{  url_for('create_campaign',sponsor_id = sponsor.id)  }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Create Campaign</a>
+    
+                <a href="{{  url_for('show_campaigns',sponsor_id = sponsor.id)  }}" class="btn btn-secondary"><i class="fa-solid fa-list"></i> Show Campaigns</a>
+            
+                <a href="{{  url_for('search_influencer')  }}" class="btn btn-info"><i class="fa-solid fa-magnifying-glass"></i> Search Influencers</a>
+                
+                <a href="{{ url_for('create_ad_request') }}" class="btn btn-info"><i class="fa-solid fa-plus"></i> Create Ad Request</a>
+            
+                <button type="submit" class="btn btn-success"><i class="fa-regular fa-eye"></i> Show ad requests</button>
+        
+            </div>
+        </div>
+    </div>    
+
+    <div class="p-4 bg-white bg-opacity-75 rounded shadow mt-3">
+        <h1 class="display-1">My Ad requests</h1>
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <td>Campaign</td>
+                    <td>Influencer</td>
+                    <td>Requirement</td>
+                    <td>Payment</td>
+                    <td>Message</td>
+                    <td>Actions</td>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ad_request in ad_requests %}
+                    <tr>
+                        <td>{{ad_request.campaign.name}}</td>
+                        <td>{{ad_request.influencer.name}}</td>
+                        <td>{{ad_request.requirements}}</td>
+                        <td>{{ad_request.payment_amount}}</td>
+                        <td>{{ad_request.messages}}</td>
+                        <td>
+                            {% if ad_request.sponsor_accepted and ad_request.influencer_accepted %}
+                                <button class="btn btn-success" disabled><i class="fa-solid fa-money-bill"></i> Process Payment </button>
+                            {% elif ad_request.sponsor_accepted %}
+                                <button class="btn btn-success" disabled><i class="fa-regular fa-circle-check"></i> Accepted </button>
+                            {% elif not ad_request.sponsor_accepted %}
+                                <button class="btn btn-danger" disabled><i class="fa-regular fa-circle-xmark"></i> Rejected </button>
+                            {% else %}
+                                <form action="{{url_for('sponsor_accept_request', sponsor_id=sponsor.id, request_id = ad_request.id)}}" method="post">
+                                    <button class="btn btn-success"><i class="fa-regular fa-circle-check"></i> Accept</button>
+                                </form>
+                                <form action="{{url_for('sponsor_reject_request', sponsor_id=sponsor.id, request_id = ad_request.id)}}" method="post">
+                                    <button class="btn btn-danger"><i class="fa-regular fa-circle-xmark"></i> Reject</button>
+                                </form>
+                                Negotiate
+                            {% endif %}
+                            
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
