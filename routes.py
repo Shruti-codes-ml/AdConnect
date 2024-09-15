@@ -149,7 +149,7 @@ def auth_required(inner_func):
     @wraps(inner_func)
     def decorated_func(*args, **kwargs):
         if session.get("id"):
-            if session['is_flagged']:
+            if session['is_flagged'] == True:
                 flash("Error : Your account has been flagged. Please contact our support team at support@adconnect.in ")
                 return redirect(url_for('login'))
             else:
@@ -164,7 +164,11 @@ def sponsor_required(inner_func):
     def decorated_func(*args, **kwargs):
         if session.get("id"):
             if session.get("user_type") == "sponsor":
-                return inner_func(*args, **kwargs)
+                if session['is_flagged'] == True:
+                    flash("Error : Your account has been flagged. Please contact our support team at support@adconnect.in ")
+                    return redirect(url_for('login'))
+                else:
+                    return inner_func(*args, **kwargs)
             else:
                 flash("Error : You are not authorized to access this page")
                 return redirect(url_for('index'))
@@ -178,7 +182,11 @@ def influencer_required(inner_func):
     def decorated_func(*args, **kwargs):
         if session.get("id"):
             if session.get("user_type") == "influencer":
-                return inner_func(*args, **kwargs)
+                if session['is_flagged'] == True:
+                    flash("Error : Your account has been flagged. Please contact our support team at support@adconnect.in ")
+                    return redirect(url_for('login'))
+                else:
+                    return inner_func(*args, **kwargs)
             else:
                 flash("Error : You are not authorized to access this page")
                 return redirect(url_for('index'))
@@ -198,6 +206,9 @@ def profile():
     elif user_type == "sponsor":
         sponsor = Sponsor.query.filter_by(id=id).first()
         return render_template('profile.html', sponsor = sponsor, user_type = user_type)
+    elif user_type=="admin":
+        admin = Admin.query.filter_by(id=id).first()
+        return render_template('profile.html',admin=admin, user_type=user_type)
     
 @app.route('/logout')
 @auth_required
@@ -371,7 +382,7 @@ def update_campaign(campaign_id):
 def update_campaign_post(campaign_id):
     campaign = Campaign.query.get(campaign_id)
     if not campaign:
-        flash("Campaign does not exist")
+        flash("Error : Campaign does not exist")
         return redirect(url_for("sponsor_home"))
     
     name = request.form.get('campaign_name')
@@ -434,7 +445,7 @@ def delete_campaign(campaign_id):
 def delete_campaign_post(campaign_id):
     campaign = Campaign.query.get(campaign_id)
     if not campaign:
-        flash("Campaign does not exist")
+        flash("Error : Campaign does not exist")
         return redirect(url_for("sponsor_home"))
     db.session.delete(campaign)
     db.session.commit()
@@ -498,17 +509,17 @@ def create_ad_request_post(influencer_id):
     payment_amount = request.form.get("payment_amount")   
 
     if not all([sponsor_id,campaign_id,inflcr_id,payment_amount]):
-        flash("Please fill all required fields")
+        flash("Error : Please fill all required fields")
         return redirect(url_for('create_ad_request',influencer_id=influencer_id))
     
     campaign = Campaign.query.filter_by(id = campaign_id, sponsor_id=sponsor_id).first()
     if not campaign:
-        flash("Invalid campaign. Please select a valid campaign.")
+        flash("Error : Invalid campaign. Please select a valid campaign.")
         return redirect(url_for('create_ad_request', influencer_id=influencer_id))
 
     influencer = Influencer.query.filter_by(id=inflcr_id).first()
     if not influencer:
-        flash("Invalid influencer. Please select a valid influencer.")
+        flash("Error : Invalid influencer. Please select a valid influencer.")
         return redirect(url_for('create_ad_request', influencer_id=influencer_id))
 
     try:
@@ -665,6 +676,35 @@ def negotiate_ad_request_sponsor_post(sponsor_id,ad_request_id):
     db.session.commit()
     flash("Message sent successfully")
     return redirect(url_for('show_ad_requests_sponsor', sponsor_id = sponsor.id))
+
+@app.route("/sponsor/<int:sponsor_id>/delete_ad_request/<int:ad_request_id>")
+@sponsor_required
+def delete_ad_request(sponsor_id,ad_request_id):
+    ad_request = AdRequest.query.get(ad_request_id)
+    if not ad_request:
+        flash("Error : Ad Request does not exist")
+        return redirect(url_for('sponsor_home'))
+    sponsor = Sponsor.query.get(sponsor_id)
+    if not sponsor:
+        flash("Error : You are not authorized to access this page")
+        return redirect(url_for('index'))
+    return render_template("/sponsor/delete_ad_request.html",sponsor=sponsor, ad_request = ad_request)
+
+@app.route("/sponsor/<int:sponsor_id>/delete_ad_request/<int:ad_request_id>", methods=['POST'])
+@sponsor_required
+def delete_ad_request_post(sponsor_id,ad_request_id):
+    ad_request = AdRequest.query.get(ad_request_id)
+    if not ad_request:
+        flash("Error : Ad Request does not exist")
+        return redirect(url_for('sponsor_home'))
+    sponsor = Sponsor.query.get(sponsor_id)
+    if not sponsor:
+        flash("Error : You are not authorized to access this page")
+        return redirect(url_for('index'))
+    db.session.delete(ad_request)
+    db.session.commit()
+    flash("Ad request deleted successfully")
+    return redirect(url_for('show_ad_requests_sponsor',sponsor_id = ad_request.sponsor_id))
 
 @app.route("/sponsor/ad_request/<int:ad_request_id>/make_payment")
 @sponsor_required
@@ -900,8 +940,26 @@ def show_ad_requests(influencer_id):
 @influencer_required
 def search_campaigns(influencer_id):
     influencer = Influencer.query.filter_by(id=influencer_id).first()
-    campaigns = Campaign.query.filter_by(visibility = "public").order_by(Campaign.id).all()
-    return render_template("/influencer/search_campaigns.html", campaigns = campaigns, influencer = influencer)
+    industries = [sponsor.industry for sponsor in Sponsor.query.distinct(Sponsor.industry).all()]
+    campaigns = Campaign.query.filter_by(visibility = "public" ).order_by(Campaign.id).all()
+    return render_template("/influencer/search_campaigns.html", campaigns = campaigns, influencer = influencer, industries=industries)
+
+@app.route('/influencer/<int:influencer_id>/search_campaigns', methods=['POST'])
+@influencer_required
+def search_campaigns_post(influencer_id):
+    industry = request.form.get('industry')
+    budget = request.form.get('budget')
+    query=Campaign.query
+    query = query.filter(Campaign.visibility=='public')
+    if industry:
+        query=query.filter(Campaign.sponsor.has(industry == industry))
+    if budget:
+        if float(budget) > 0:
+            query = query.filter(Campaign.budget >= budget)
+    campaigns = query.all()
+    influencer = Influencer.query.filter_by(id=influencer_id).first()
+    industries = [sponsor.industry for sponsor in Sponsor.query.distinct(Sponsor.industry).all()]
+    return redirect(url_for('search_campaigns', influencer_id=influencer_id))
 
 @app.route('/influencer/<int:influencer_id>/<int:campaign_id>/<int:sponsor_id>/interested_campaign', methods=['POST'])
 @influencer_required
@@ -1034,3 +1092,200 @@ def negotiate_ad_request_influencer_post(influencer_id,ad_request_id):
     flash("Message sent successfully")
     return redirect(url_for('show_ad_requests', influencer_id = influencer.id))
    
+
+############################################################# 
+################### ADMIN FUNCTIONALITY #####################
+#############################################################
+
+def admin_required(inner_func):
+    @wraps(inner_func)
+    def decorated_func(*args, **kwargs):
+        if session.get("id"):
+            if session.get("user_type") == "admin":
+                return inner_func(*args, **kwargs)
+            else:
+                flash("Error : You are not authorized to access this page")
+                return redirect(url_for('index'))
+        else:
+            flash("Error : Please log in to continue")
+            return redirect(url_for('login'))
+    return decorated_func
+
+@app.route("/profile/admin/update", methods = ["POST"])
+@admin_required
+def update_profile_admin():
+    username = request.form.get('username')
+    password = request.form.get('current_password')
+    new_password = request.form.get('new_password')
+    confirm_new_password = request.form.get('confirm_new_password')
+    name = request.form.get('name')
+
+    admin = Admin.query.filter_by(id = session['id']).first()
+    if password:
+        if check_password_hash(admin.passhash , password):                    
+            if new_password or confirm_new_password: 
+                if password != new_password and new_password == confirm_new_password:
+                    password_error = is_valid_password(new_password)
+                    if password_error:
+                        flash(f"Error : {password_error}")
+                        return redirect(url_for('profile'))
+                    else:
+                        admin.passhash = generate_password_hash(new_password)
+                        flash("Password updated successfully")
+                        return redirect(url_for('admin_home'))
+                else:
+                    flash("Error : New password must be different from the current password and confirm password should match")
+                    return redirect(url_for('profile'))
+            else:
+                flash("No new changes made")
+            return redirect(url_for('profile'))
+        else:
+            flash("Error : Password is incorrect")
+            return redirect(url_for('profile'))
+    else:
+        flash("Error : Verify password to make changes to profile")
+        return redirect(url_for('profile'))
+
+@app.route('/admin/home')
+@admin_required
+def admin_home():
+    admin = Admin.query.filter_by(id=session['id']).first()
+    influencers = Influencer.query.all()
+    sponsors =Sponsor.query.all()
+    private_campaigns = Campaign.query.filter_by(visibility ='private').all()
+    public_campaigns = Campaign.query.filter_by(visibility='public').all()
+    flagged_influencers = Flag.query.filter_by(entity_type='influencer').all()
+    flagged_sponsors = Flag.query.filter_by(entity_type='sponsor').all()
+    
+    return render_template('/admin/admin_home.html',
+                           admin = admin, 
+                           influencers=len(influencers), 
+                           sponsors=len(sponsors),
+                           private_campaigns=len(private_campaigns),
+                           public_campaigns=len(public_campaigns),
+                           flagged_influencers = len(flagged_influencers),
+                           flagged_sponsors = len(flagged_sponsors))
+
+@app.route("/admin/manage_influencers")
+@admin_required
+def manage_influencers():
+    admin=Admin.query.get(session['id'])
+    influencers = Influencer.query.all()
+    flagged_influencers = Flag.query.filter_by(entity_type='influencer').all()
+    flagged_influencer_ids = {flag.entity_id for flag in flagged_influencers}
+
+    return render_template('/admin/manage_influencers.html', influencers = influencers, admin=admin,flagged_influencer_ids = flagged_influencer_ids)
+
+@app.route("/admin/manage_sponsors")
+@admin_required
+def manage_sponsors():
+    admin=Admin.query.get(session['id'])
+    sponsors = Sponsor.query.all()
+    flagged_sponsors = Flag.query.filter_by(entity_type='sponsor').all()
+    flagged_sponsor_ids = {flag.entity_id for flag in flagged_sponsors}
+
+    return render_template('/admin/manage_sponsors.html', sponsors = sponsors, admin=admin, flagged_sponsor_ids=flagged_sponsor_ids)
+
+
+@app.route("/admin/manage_campaigns")
+@admin_required
+def manage_campaigns():
+    admin=Admin.query.get(session['id'])
+    campaigns = Campaign.query.all()
+
+    flagged_campaigns = Flag.query.filter_by(entity_type='campaign').all()
+    flagged_campaign_ids = {flag.entity_id for flag in flagged_campaigns}
+
+    return render_template('/admin/manage_campaigns.html', campaigns = campaigns, admin=admin, flagged_campaign_ids=flagged_campaign_ids)
+
+
+@app.route("/admin/<int:admin_id>/flag/<entity_type>/<int:entity_id>", methods=["POST"])
+@admin_required
+def flag_entity(admin_id, entity_type, entity_id):
+    if not admin_id or not entity_type or not entity_id:
+        flash("Error : Provide all required fields")
+        return redirect(url_for('admin_home'))
+    if admin_id != session['id']:
+        flash("Error : You are not authorized to access this page.")
+        return redirect(url_for('index'))
+    if entity_type not in ['influencer', 'sponsor', 'campaign']:
+        flash("Error : Incorrect entity type")
+        return redirect(url_for('admin_home'))
+    if entity_type == 'influencer':
+        influencer = Influencer.query.get(entity_id)
+        flagged = Flag.query.filter_by(entity_id=entity_id, entity_type=entity_type).first()
+        if flagged:
+            flash(f"{entity_type.capitalize()} is already flagged")
+            return redirect(url_for('admin_home'))
+        if not influencer:
+            flash("Error : Influencer does not exist")
+            return redirect(url_for('admin_home'))
+    if entity_type == 'sponsor':
+        sponsor = Sponsor.query.get(entity_id)
+        flagged = Flag.query.filter_by(entity_id=entity_id, entity_type=entity_type).first()
+        if flagged:
+            flash(f"{entity_type.capitalize()} is already flagged")
+            return redirect(url_for('admin_home'))
+        if not sponsor:
+            flash("Error : Sponsor does not exist")
+            return redirect(url_for('admin_home'))
+    if entity_type == 'campaign':
+        campaign = Campaign.query.get(entity_id)
+        flagged = Flag.query.filter_by(entity_id=entity_id, entity_type='entity_type').first()
+        if flagged:
+            flash(f"{entity_type.capitalize()} is already flagged")
+            return redirect(url_for('admin_home'))
+        if not campaign:
+            flash("Error : Campaign does not exist")
+            return redirect(url_for('admin_home'))
+    flag = Flag(reason="Flagged for supervision to ensure compliance with platform terms and conditions",
+                entity_type = entity_type, entity_id=entity_id, admin_id = admin_id)
+    db.session.add(flag)
+    db.session.commit()
+    flash(f"{entity_type.capitalize()} flagged successfully")
+    return redirect(url_for('admin_home'))
+
+@app.route("/admin/<int:admin_id>/unflag/<entity_type>/<int:entity_id>", methods=["POST"])
+@admin_required
+def unflag_entity(admin_id, entity_type, entity_id):
+    if not admin_id or not entity_type or not entity_id:
+        flash("Error : Provide all required fields")
+        return redirect(url_for('admin_home'))
+    if admin_id != session['id']:
+        flash("Error : You are not authorized to access this page.")
+        return redirect(url_for('index'))
+    if entity_type not in ['influencer', 'sponsor', 'campaign']:
+        flash("Error : Incorrect entity type")
+        return redirect(url_for('admin_home'))
+    if entity_type == 'influencer':
+        influencer = Influencer.query.get(entity_id)
+        flagged = Flag.query.filter_by(entity_id=entity_id, entity_type=entity_type).first()
+        if not flagged:
+            flash(f"{entity_type.capitalize()} is not flagged")
+            return redirect(url_for('admin_home'))
+        if not influencer:
+            flash("Error : Influencer does not exist")
+            return redirect(url_for('admin_home'))
+    if entity_type == 'sponsor':
+        sponsor = Sponsor.query.get(entity_id)
+        flagged = Flag.query.filter_by(entity_id=entity_id, entity_type=entity_type).first()
+        if not flagged:
+            flash(f"{entity_type.capitalize()} is not flagged")
+            return redirect(url_for('admin_home'))
+        if not sponsor:
+            flash("Error : Sponsor does not exist")
+            return redirect(url_for('admin_home'))
+    if entity_type == 'campaign':
+        campaign = Campaign.query.get(entity_id)
+        flagged = Flag.query.filter_by(entity_id=entity_id, entity_type=entity_type).first()
+        if not flagged:
+            flash(f"{entity_type.capitalize()} is not flagged")
+            return redirect(url_for('admin_home'))
+        if not campaign:
+            flash("Error : Campaign does not exist")
+            return redirect(url_for('admin_home'))
+    flag = Flag.query.filter_by(entity_id=entity_id, entity_type=entity_type,admin_id=admin_id).first()
+    db.session.delete(flag)
+    db.session.commit()
+    flash(f"{entity_type.capitalize()} unflagged successfully")
+    return redirect(url_for('admin_home'))

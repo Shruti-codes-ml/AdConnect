@@ -1,0 +1,63 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Manage Campaigns
+{% endblock %}
+
+{% block content %}
+    <div class="p-4 bg-white bg-opacity-75 rounded shadow mt-3">
+        <h1 class="display-1">Hello @<span class="text-muted">{{  admin.username  }}</span></h1>
+        <div class=" container d-flex gap-5">
+            <a href="{{ url_for('manage_campaigns') }}" class="btn btn-primary"><i class="fa-solid fa-users"></i> Manage campaigns</a>
+        
+            <a href="{{ url_for('manage_sponsors') }}" class="btn btn-secondary"><i class="fa-solid fa-users-between-lines"></i> Manage Sponsors</a>
+            
+            <a href="{{ url_for('manage_campaigns') }}" class="btn btn-info"><i class="fa-solid fa-square-poll-horizontal"></i> Manage Campaigns</a>
+        </div>
+    
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <td>Name</td>
+                    <td>Description</td>
+                    <td>Start Date</td>
+                    <td>End Date</td>
+                    <td>Budget</td>
+                    <td>Visibility</td>
+                    <td>Goals</td>
+                    <td>Actions</td>
+                </tr>
+            </thead>
+            <tbody>
+                {% for campaign in campaigns %}
+                    <tr>
+                        <td>{{campaign.name}}</td>
+                        <td>{{campaign.description}}</td>
+                        <td>{{campaign.start_date}}</td>
+                        <td>{{campaign.end_date}}</td>
+                        <td>{{campaign.budget}}</td>
+                        <td>{{campaign.visibility}}</td>
+                        <td>{{campaign.goals}}</td>
+                        <td>
+                            {% if campaign.id in flagged_campaign_ids %}
+                                <form action="{{url_for('unflag_entity',entity_type='campaign', entity_id=campaign.id, admin_id = admin.id)}}" class="form" method="post">
+                                    <button type="submit" class="btn btn-success"> Unflag </button>
+                                </form>
+                            {% else %}
+                                <form action="{{url_for('flag_entity',entity_type='campaign', entity_id=campaign.id, admin_id = admin.id)}}" class="form" method="post">
+                                    <button type="submit" class="btn btn-danger"> Flag </button>
+                                </form>
+                            {% endif %}
+                            
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="form-group p-2"></div>
+            <a href="{{ url_for('admin_home') }}" class="btn btn-info"><i class="fa fa-arrow-circle-left"></i> Go Back</a>
+        </div>
+    </div>    
+    
+
+{% endblock %}

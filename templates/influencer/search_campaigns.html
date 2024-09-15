@@ -16,6 +16,21 @@
 
     <div class="p-4 bg-white bg-opacity-75 rounded shadow mt-3">
         <h1 class="display-1">Public Campaigns</h1>
+        <form action="{{url_for('search_campaigns_post', influencer_id=influencer.id)}}" method="post">
+            <div class="d-flex gap-5">
+                <label for="industry">Industry</label>
+                <select name="industry" class="form-select">
+                    <option value=""></option>
+                    {% for industry in industries %}
+                        <option value="{{industry}}">{{industry}}</option>
+                    {% endfor%}
+                </select>
+                <label for="budget">Budget</label>
+                <input type="number" name="budget" class="form-control" min="0">
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+        </form>
+        
         <table class="table table-hover">
             <thead>
                 <tr>

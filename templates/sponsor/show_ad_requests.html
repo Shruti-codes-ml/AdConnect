@@ -54,6 +54,10 @@
                                     <form action="{{url_for('make_payment', ad_request_id = ad_request.id) }}">
                                         <button class="btn btn-secondary"><i class="fa-solid fa-money-bill"></i> Process Payment </button>
                                     </form>
+                                    <form action="{{url_for('delete_ad_request', sponsor_id=sponsor.id, ad_request_id = ad_request.id)}}">
+                                        <button class="btn btn-danger"><i class="fa-solid fa-trash"></i> Delete</button>
+                                    </form>
+                                    
                                 {% endif %}
                             {% elif ad_request.sponsor_accepted ==True %}
                                 <button class="btn btn-success" disabled><i class="fa-regular fa-circle-check"></i> Accepted </button>
@@ -69,7 +73,11 @@
                                 <form action="{{url_for('negotiate_ad_request_sponsor', sponsor_id=sponsor.id, ad_request_id = ad_request.id)}}">
                                     <button class="btn btn-info"><i class="fa-regular fa-handshake"></i> Negotiate</button>
                                 </form>
+                                <form action="{{url_for('delete_ad_request', sponsor_id=sponsor.id, ad_request_id = ad_request.id)}}">
+                                    <button class="btn btn-danger"><i class="fa-solid fa-trash"></i> Delete</button>
+                                </form>
                             {% endif %}
+                            
                             
                         </td>
                     </tr>

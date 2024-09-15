@@ -1,0 +1,75 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Home Page
+{% endblock %}
+
+{% block content %}
+    <div class="p-4 bg-white bg-opacity-75 rounded shadow mt-3">
+        <h1 class="display-1">Hello @<span class="text-muted">{{  admin.username  }}</span></h1>
+        
+        <div class="container">
+            <div class="row">
+                <div class="col-md-2">
+                    <div class="card text-white bg-primary mb-3" style="max-width: 18rem;">
+                        <div class="card-header">Registered Influencers</div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{influencers}}</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card text-white bg-secondary mb-3" style="max-width: 18rem;">
+                        <div class="card-header">Registered Sponsors</div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{sponsors}}</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card text-white bg-success mb-3" style="max-width: 18rem;">
+                        <div class="card-header">Private Campaigns</div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{private_campaigns}}</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card text-white bg-danger mb-3" style="max-width: 18rem;">
+                        <div class="card-header">Public Campaigns</div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{public_campaigns}}</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card text-white bg-info mb-3" style="max-width: 18rem;">
+                        <div class="card-header">Flagged Influencers</div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{flagged_influencers}}</h5>
+                            </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card text-white bg-dark mb-3" style="max-width: 18rem;">
+                        <div class="card-header">Flagged Sponsors</div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{flagged_sponsors}}</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class=" container d-flex gap-5">
+            <a href="{{ url_for('manage_influencers') }}" class="btn btn-primary"><i class="fa-solid fa-users"></i> Manage Influencers</a>
+        
+            <a href="{{ url_for('manage_sponsors') }}" class="btn btn-secondary"><i class="fa-solid fa-users-between-lines"></i> Manage Sponsors</a>
+            
+            <a href="{{ url_for('manage_campaigns') }}" class="btn btn-info"><i class="fa-solid fa-square-poll-horizontal"></i> Manage Campaigns</a>
+        </div>
+    </div>    
+    {% block subcontent %}
+        
+    {% endblock %}
+{% endblock %}

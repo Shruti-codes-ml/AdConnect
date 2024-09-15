@@ -1,0 +1,28 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Delete Ad Request
+{% endblock %}
+
+{% block content %}
+    <div class="p-4 bg-white bg-opacity-75 rounded shadow mt-3">
+        <h1 class="display-1">Delete Ad Request </h1>
+        <p class="f-3">Are you sure you want to delete this ad request?</p>
+        <p class="f-3">Campaign Name : {{ad_request.campaign.name}}</p>
+        <p class="f-3">Influencer Name : {{ad_request.influencer.name}}</p>
+        <p class="f-3">Sponsor Name : {{ad_request.sponsor.name}}</p>
+        <form action="{{url_for('delete_ad_request_post', ad_request_id = ad_request.id, sponsor_id = ad_request.sponsor_id)}}" method="post" class="form">
+        
+            <div class="form-group p-2">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash"></i>
+                    Delete
+                </button>
+            </div>
+
+            <div class="form-group p-2">
+                <a href="{{ url_for('show_ad_requests_sponsor',sponsor_id = ad_request.sponsor_id) }}" class="btn btn-info"><i class="fa fa-arrow-circle-left"></i> Go Back</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}
