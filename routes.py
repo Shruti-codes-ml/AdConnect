@@ -2,11 +2,20 @@ from app import app
 import re
 from flask import render_template
 from flask import request, flash, redirect, url_for, session
-from models import db, Influencer, Sponsor, Admin, Campaign, AdRequest
+from models import db, Influencer, Sponsor, Admin, Campaign, AdRequest, Flag
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from datetime import datetime
 from sqlalchemy import desc
+
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.units import inch
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+from io import BytesIO
+
+from flask import send_file
 
 @app.route("/")
 def index():
@@ -54,6 +63,12 @@ def login_post():
     
     session['user_type'] = user_type
     session['id'] = user.id
+
+    flag = Flag.query.filter_by(entity_type=session['user_type'], entity_id=session['id']).first()
+    if flag:
+        session['is_flagged'] = True
+    else:
+        session['is_flagged'] = False
     flash(f"{user_type.capitalize()} login successful")
     return redirect(url_for('index'))
 
@@ -94,7 +109,7 @@ def register_post():
     if password_error:
         flash(f"Error : {password_error}")
         return redirect(url_for('register'))
-    if not name or not name.isalpha():
+    if not name or not name.replace(" ", "").isalpha():
         flash("Error : Name should contain only alphabetic characters")
         return redirect(url_for('register'))
     if user_type == "influencer":
@@ -134,7 +149,11 @@ def auth_required(inner_func):
     @wraps(inner_func)
     def decorated_func(*args, **kwargs):
         if session.get("id"):
-            return inner_func(*args, **kwargs)
+            if session['is_flagged']:
+                flash("Error : Your account has been flagged. Please contact our support team at support@adconnect.in ")
+                return redirect(url_for('login'))
+            else:
+                return inner_func(*args, **kwargs)
         else:
             flash("Error : Please log in to continue")
             return redirect(url_for('login'))
@@ -232,7 +251,7 @@ def update_profile_sponsor():
                     return redirect(url_for('profile'))
             
             if name and sponsor.name != name:
-                if not re.match("^[A-Za-z\s]+$", name):
+                if not re.match(r"^[A-Za-z\s]+$", name):
                     flash("Error : Name should contain only alphabetic characters")
                     return redirect(url_for('profile'))
                 sponsor.name = name
@@ -508,8 +527,7 @@ def create_ad_request_post(influencer_id):
         messages = messages,
         requirements = requirements,
         payment_amount = payment_amount,
-        sponsor_accepted = True,
-        status = "pending"
+        sponsor_accepted = True
     )
     db.session.add(ad_request)
     db.session.commit()
@@ -602,6 +620,7 @@ def sponsor_reject_request(sponsor_id,request_id):
     return redirect(url_for('sponsor_home'))
 
 @app.route("/sponsor/<int:sponsor_id>/negotiate_ad_request_sponsor/<int:ad_request_id>")
+@sponsor_required
 def negotiate_ad_request_sponsor(sponsor_id,ad_request_id):
     sponsor = Sponsor.query.get(sponsor_id)
     if not sponsor:
@@ -615,6 +634,7 @@ def negotiate_ad_request_sponsor(sponsor_id,ad_request_id):
     return render_template("/sponsor/negotiate_ad_request.html", sponsor=sponsor,ad_request=ad_request)
 
 @app.route("/sponsor/<int:sponsor_id>/negotiate_ad_request_sponsor/<int:ad_request_id>", methods=['POST'])
+@sponsor_required
 def negotiate_ad_request_sponsor_post(sponsor_id,ad_request_id):
     sponsor = Sponsor.query.get(sponsor_id)
     if not sponsor:
@@ -635,9 +655,140 @@ def negotiate_ad_request_sponsor_post(sponsor_id,ad_request_id):
         return redirect(url_for('sponsor_home'))
     
     ad_request.messages = messages
+    ad_request.sponsor_accepted = True
+
+    if ad_request.sponsor_accepted == True and ad_request.influencer_accepted == True:
+        ad_request.status = 'Accepted'
+    if ad_request.sponsor_accepted == False or ad_request.influencer_accepted == False:
+        ad_request.status = 'Rejected'
+
     db.session.commit()
     flash("Message sent successfully")
     return redirect(url_for('show_ad_requests_sponsor', sponsor_id = sponsor.id))
+
+@app.route("/sponsor/ad_request/<int:ad_request_id>/make_payment")
+@sponsor_required
+def make_payment(ad_request_id):
+    ad_request = AdRequest.query.get(ad_request_id)
+    if not ad_request:
+        flash("Error : Invalid Ad Request")
+        return redirect(url_for('sponsor_home'))
+    
+    return render_template('/sponsor/make_payment.html', ad_request = ad_request)
+
+@app.route("/sponsor/ad_request/<int:ad_request_id>/make_payment", methods=["POST"])
+@sponsor_required
+def make_payment_post(ad_request_id):
+    ad_request = AdRequest.query.get(ad_request_id)
+    if not ad_request:
+        flash("Error : Invalid Ad Request")
+        return redirect(url_for('sponsor_home'))
+    
+    if ad_request.payment_status == True:
+        flash("Payment is already processed")
+        return redirect(url_for('make_payment',ad_request_id=ad_request.id))
+    
+    payment_amount = request.form.get('payment_amount')
+    try:
+        payment_amount = float(payment_amount)
+        if payment_amount <= 0:
+            raise ValueError
+    except ValueError:
+        flash("Error : Invalid payment amount")
+        return redirect(url_for('make_payment',ad_request_id = ad_request.id))
+
+    ad_request.payment_amount = payment_amount
+    ad_request.payment_status = True
+    db.session.commit()
+    flash("Payment successful")
+    return redirect(url_for('make_payment', ad_request_id=ad_request.id))
+
+@app.route("/sponsor/ad_request/<int:ad_request_id>/download_invoice")
+@sponsor_required
+def download_invoice(ad_request_id):
+    ad_request = AdRequest.query.get(ad_request_id)
+    if not ad_request:
+        flash("Error: Invalid Ad Request")
+        return redirect(url_for('sponsor_home'))
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    elements = []
+
+    # Styles
+    styles = getSampleStyleSheet()
+    title_style = styles['Title']
+    title_style.fontName = 'Times-Roman'
+    title_style.fontSize = 20
+    title_style.leading = 30
+    title_style.alignment = 1
+
+    subtitle_style = styles['Heading2']
+    subtitle_style.fontName = 'Times-Roman'
+    subtitle_style.fontSize = 14
+    subtitle_style.leading = 20
+    subtitle_style.alignment = 1
+
+    footer_style = styles['Normal']
+    footer_style.fontName = 'Times-Roman'
+    footer_style.fontSize = 12
+    footer_style.leading = 18
+    footer_style.alignment = 1
+
+    header_style = styles['Heading1']
+    header_style.fontName = 'Times-Roman'
+    header_style.fontSize = 14
+    header_style.leading = 18
+    header_style.alignment = 1
+
+    # Title and Subtitle
+    title = Paragraph("AdConnect", title_style)
+    subtitle = Paragraph(f"Invoice for Ad Request #{ad_request.id}", subtitle_style)
+
+    elements.append(title)
+    elements.append(Spacer(1, 12))
+    elements.append(subtitle)
+    elements.append(Spacer(1, 24))
+
+    # Data for the table
+    data = [
+        ["Description", "Details"],
+        ["Campaign Name", ad_request.campaign.name],
+        ["Sponsor Name", ad_request.sponsor.username],
+        ["Influencer Name", ad_request.influencer.username],
+        ["Payment Amount", f"{ad_request.payment_amount:.2f}"],
+        ["Status", "Paid"]
+    ]
+
+    # Create the table
+    table = Table(data, colWidths=[2.5 * inch, 3.5 * inch])
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.turquoise),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Times-Roman'),
+        ('FONTNAME', (0, 1), (-1, -1), 'Times-Roman'),
+        ('FONTSIZE', (0, 0), (-1, -1), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+    ]))
+
+    elements.append(table)
+    elements.append(Spacer(1, 24))  # Space between table and footer
+
+    # Footer
+    footer = Paragraph("Thank you for your payment!", footer_style)
+    elements.append(footer)
+
+    # Build the PDF
+    doc.build(elements)
+
+    buffer.seek(0)
+
+    return send_file(buffer, as_attachment=True, download_name=f"invoice_{ad_request.id}.pdf", mimetype='application/pdf')
+
+
 # #################################### influencer functions
 
 @app.route("/profile/influencer/update",methods=["POST"])
@@ -688,7 +839,7 @@ def update_profile_influencer():
                     return redirect(url_for('profile'))
             
             if name and influencer.name != name:
-                if not re.match("^[A-Za-z\s]+$", name):
+                if not re.match(r"^[A-Za-z\s]+$", name):
                     flash("Error : Name should contain only alphabetic characters")
                     return redirect(url_for('profile'))
                 influencer.name = name
@@ -755,7 +906,7 @@ def search_campaigns(influencer_id):
 @app.route('/influencer/<int:influencer_id>/<int:campaign_id>/<int:sponsor_id>/interested_campaign', methods=['POST'])
 @influencer_required
 def interested_campaign(campaign_id, sponsor_id,influencer_id):
-    adrequest = AdRequest(campaign_id = campaign_id, sponsor_id = sponsor_id, influencer_id = influencer_id,influencer_accepted=True, messages="I am interested")
+    adrequest = AdRequest(campaign_id = campaign_id, sponsor_id = sponsor_id, influencer_id = influencer_id, messages="I am interested", influencer_accepted = True)
     db.session.add(adrequest)
     db.session.commit()
     flash("Ad Request sent successfully")
@@ -872,7 +1023,14 @@ def negotiate_ad_request_influencer_post(influencer_id,ad_request_id):
         return redirect(url_for('influencer_home'))
     
     ad_request.messages = messages
+    ad_request.influencer_accepted = True
+
+    if ad_request.sponsor_accepted == True and ad_request.influencer_accepted == True:
+        ad_request.status = 'Accepted'
+    if ad_request.sponsor_accepted == False or ad_request.influencer_accepted == False:
+        ad_request.status = 'Rejected'
+
     db.session.commit()
     flash("Message sent successfully")
-    return redirect(url_for('show_ad_requests_influencer', influencer_id = influencer.id))
+    return redirect(url_for('show_ad_requests', influencer_id = influencer.id))
    

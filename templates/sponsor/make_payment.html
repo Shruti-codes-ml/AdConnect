@@ -1,0 +1,44 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Make Payment
+{% endblock %}
+
+{% block content %}
+    <div class="container d-flex justify-content-center align-items-center mt-5">
+        <div class="col-md-8 d-inline-block p-4 bg-white bg-opacity-75 rounded shadow">
+        
+            <div class="card p-4 bg-white bg-opacity-75">
+                <h1 class="card-title">Make Payment</h1>
+                <form action="{{ url_for('make_payment_post',ad_request_id = ad_request.id) }}" method="post">
+                    
+                    <div class="form-group p-2">
+                        <label for="influencer_name" class="card-text">Influencer Name</label>
+                        <input type="text" name="influencer_name" class="form-control" value="{{ad_request.influencer.username}}" readonly>
+                    </div>
+                    <div class="form-group p-2">
+                        <label for="sponsor_name" class="card-text">Sponsor Name</label>
+                        <input type="text" name="sponsor_name" class="form-control" value="{{ad_request.sponsor.username}}" readonly>
+                    </div>
+                    <div class="form-group p-2">
+                        <label for="campaign_name" class="card-text">Campaign Name</label>
+                        <input type="text" name="campaign_name" class="form-control" value="{{ad_request.campaign.name}}" readonly>
+                    </div>
+                    <div class="form-group p-2">
+                        <label for="payment_amount" class="card-text">Payment Amount</label>
+                        <input type="number" name="payment_amount" class="form-control" value="{{ad_request.payment_amount}}">
+                    </div>
+                    
+                    <div class="form-group mt-3 p-2">
+                        <button type="submit" class="btn btn-success"><i class="fa-solid fa-money-bill"></i> Make Payment </button>
+                    
+                    {% if ad_request.payment_status == True %}
+                        <a href="{{url_for('download_invoice', ad_request_id = ad_request.id)}}" class="btn btn-info"><i class="fa-solid fa-download"></i> Download Invoice</a>
+                    {% endif %}
+                    
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -48,7 +48,13 @@
                         <td>{{ ad_request.status }}</td>
                         <td>
                             {% if ad_request.sponsor_accepted == True and ad_request.influencer_accepted == True %}
-                                <button class="btn btn-success" disabled><i class="fa-solid fa-money-bill"></i> Process Payment </button>
+                                {% if ad_request.payment_status == True %}
+                                    <button class="btn btn-success"><i class="fa-solid fa-thumbs-up"></i> Payment Done </button>
+                                {% else %}
+                                    <form action="{{url_for('make_payment', ad_request_id = ad_request.id) }}">
+                                        <button class="btn btn-secondary"><i class="fa-solid fa-money-bill"></i> Process Payment </button>
+                                    </form>
+                                {% endif %}
                             {% elif ad_request.sponsor_accepted ==True %}
                                 <button class="btn btn-success" disabled><i class="fa-regular fa-circle-check"></i> Accepted </button>
                             {% elif ad_request.sponsor_accepted == False %}

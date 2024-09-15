@@ -39,7 +39,11 @@
                         <td>{{ ad_request.status }}</td>
                         <td>
                             {% if ad_request.sponsor_accepted == True and ad_request.influencer_accepted == True%}
-                                <button class="btn btn-success" disabled><i class="fa-solid fa-money-bill"></i> Awaiting Payment </button>
+                                {% if ad_request.payment_status == True %}
+                                    <button class="btn btn-success"><i class="fa-solid fa-thumbs-up"></i> Payment Done </button>
+                                {% else %}
+                                <button class="btn btn-secondary" disabled><i class="fa-solid fa-money-bill"></i> Awaiting Payment </button>
+                                {% endif %}
                             {% elif ad_request.influencer_accepted == True %}
                                 <button class="btn btn-success" disabled><i class="fa-regular fa-circle-check"></i> Accepted </button>
                             {% elif ad_request.influencer_accepted == False %}
@@ -51,7 +55,7 @@
                                 <form action="{{url_for('influencer_reject_request', influencer_id=influencer.id, request_id = ad_request.id)}}" method="post">
                                     <button class="btn btn-danger"><i class="fa-regular fa-circle-xmark"></i> Reject</button>
                                 </form>
-                                <form action="{{url_for('negotiate_ad_request_influencer', influencer_id=influencer.id, ad_request_id = ad_request.id)}}" method="post">
+                                <form action="{{url_for('negotiate_ad_request_influencer', influencer_id=influencer.id, ad_request_id = ad_request.id)}}">
                                     <button class="btn btn-info"><i class="fa-regular fa-handshake"></i> Negotiate</button>
                                 </form>
                             {% endif %}
