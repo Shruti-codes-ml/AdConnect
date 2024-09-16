@@ -45,7 +45,19 @@
                         <td>{{ad_request.requirements}}</td>
                         <td>{{ad_request.payment_amount}}</td>
                         <td>{{ad_request.messages}}</td>
-                        <td>{{ ad_request.status }}</td>
+                        <td>
+                            {% if (ad_request.sponsor_accepted == True) and (ad_request.influencer_accepted == None) %}
+                                Sponsor Accepted
+                            {% elif (ad_request.sponsor_accepted == None) and (ad_request.influencer_accepted == True) %}
+                                Influencer Accepted
+                            {% elif (ad_request.sponsor_accepted == False) and (ad_request.influencer_accepted == None) %}
+                                Sponsor Rejected
+                            {% elif (ad_request.sponsor_accepted == None) and (ad_request.influencer_accepted == False) %}
+                                Influencer Rejected
+                            {% else %}
+                                {{ad_request.status}}
+                            {% endif %}
+                        </td>
                         <td>
                             {% if ad_request.sponsor_accepted == True and ad_request.influencer_accepted == True %}
                                 {% if ad_request.payment_status == True %}
@@ -59,9 +71,9 @@
                                     </form>
                                     
                                 {% endif %}
-                            {% elif ad_request.sponsor_accepted ==True %}
+                            {% elif ad_request.sponsor_accepted == True and ad_request.influencer_accepted != False %}
                                 <button class="btn btn-success" disabled><i class="fa-regular fa-circle-check"></i> Accepted </button>
-                            {% elif ad_request.sponsor_accepted == False %}
+                            {% elif ad_request.sponsor_accepted == False or ad_request.influencer_accepted == False %}
                                 <button class="btn btn-danger" disabled><i class="fa-regular fa-circle-xmark"></i> Rejected </button>
                             {% else %}
                                 <form action="{{url_for('sponsor_accept_request', sponsor_id=sponsor.id, request_id = ad_request.id)}}" method="post">

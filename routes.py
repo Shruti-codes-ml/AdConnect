@@ -397,7 +397,7 @@ def update_campaign(campaign_id):
         flash("Error : This campaign has been flagged. Please contact our support team at support@adconnect.in ")
         return redirect(url_for('show_campaigns',sponsor_id=session['id']))
     campaign = Campaign.query.filter_by(id=campaign_id).first()
-    return render_template('/sponsor/update_campaigns.html', campaign = campaign)
+    return render_template('/sponsor/update_campaign.html', campaign = campaign)
 
 @app.route("/campaign/<int:campaign_id>/update" , methods=['POST'])
 @sponsor_required
@@ -466,8 +466,8 @@ def update_campaign_post(campaign_id):
     campaign.budget = budget
     campaign.visibility = visibility
     campaign.goals = goals
-    campaign.requirements = requirements,
-    campaign.payment_amount = payment,
+    campaign.requirements = requirements
+    campaign.payment_amount = payment
 
     db.session.commit()
     flash("Campaign updated successfully")
@@ -547,7 +547,7 @@ def create_ad_request_post(influencer_id):
     requirements = request.form.get("requirements")
     payment_amount = request.form.get("payment_amount")   
 
-    if not all([sponsor_id,campaign_id,inflcr_id,payment_amount]):
+    if not all([sponsor_id,campaign_id,inflcr_id,requirements,payment_amount]):
         flash("Error : Please fill all required fields")
         return redirect(url_for('create_ad_request',influencer_id=influencer_id))
     
@@ -579,8 +579,7 @@ def create_ad_request_post(influencer_id):
         sponsor_id = sponsor_id,
         messages = messages,
         requirements = requirements,
-        payment_amount = payment_amount,
-        sponsor_accepted = True
+        payment_amount = payment_amount
     )
     db.session.add(ad_request)
     db.session.commit()
@@ -708,7 +707,6 @@ def negotiate_ad_request_sponsor_post(sponsor_id,ad_request_id):
         return redirect(url_for('sponsor_home'))
     
     ad_request.messages = messages
-    ad_request.sponsor_accepted = True
 
     if ad_request.sponsor_accepted == True and ad_request.influencer_accepted == True:
         ad_request.status = 'Accepted'
@@ -983,7 +981,7 @@ def show_ad_requests(influencer_id):
 def search_campaigns(influencer_id):
     influencer = Influencer.query.filter_by(id=influencer_id).first()
     industries = [sponsor.industry for sponsor in Sponsor.query.distinct(Sponsor.industry).all()]
-    campaigns = Campaign.query.filter_by(visibility = "public" ).order_by(Campaign.id).all()
+    campaigns = Campaign.query.filter_by(visibility = "public" ).all()
     return render_template("/influencer/search_campaigns.html", campaigns = campaigns, influencer = influencer, industries=industries)
 
 @app.route('/influencer/<int:influencer_id>/search_campaigns', methods=['POST'])
@@ -1006,7 +1004,17 @@ def search_campaigns_post(influencer_id):
 @app.route('/influencer/<int:influencer_id>/<int:campaign_id>/<int:sponsor_id>/interested_campaign', methods=['POST'])
 @influencer_required
 def interested_campaign(campaign_id, sponsor_id,influencer_id):
-    adrequest = AdRequest(campaign_id = campaign_id, sponsor_id = sponsor_id, influencer_id = influencer_id, messages="I am interested", influencer_accepted = True)
+    existing_ad_request = AdRequest.query.filter_by(campaign_id=campaign_id,sponsor_id=sponsor_id,influencer_id=influencer_id).first()
+    if existing_ad_request:
+        flash("Ad request already initiated")
+        return redirect(url_for('influencer_home'))
+    campaign=Campaign.query.get(campaign_id)
+    adrequest = AdRequest(campaign_id = campaign_id, 
+                          sponsor_id = sponsor_id, 
+                          influencer_id = influencer_id, 
+                          messages="I am interested", 
+                          requirements = campaign.requirements,
+                          payment_amount = campaign.payment_amount)
     db.session.add(adrequest)
     db.session.commit()
     flash("Ad Request sent successfully")
@@ -1123,7 +1131,6 @@ def negotiate_ad_request_influencer_post(influencer_id,ad_request_id):
         return redirect(url_for('influencer_home'))
     
     ad_request.messages = messages
-    ad_request.influencer_accepted = True
 
     if ad_request.sponsor_accepted == True and ad_request.influencer_accepted == True:
         ad_request.status = 'Accepted'

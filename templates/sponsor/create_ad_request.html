@@ -9,11 +9,13 @@
        <h1 class="display-1">Create Ad Request</h1>
 
        <form action="{{url_for('create_ad_request_post', influencer_id = influencer_id)}}" method="POST">
+            
             <div class="form-group p-2">
-                <label for="campaign_name" class="form-label">Campaign Name</label>
-                <select name="campaign_id" class="form-select">
+                <label for="campaign_id" class="form-label">Campaign Name</label>
+                <select id="campaign_id" name="campaign_id" class="form-select">
+                    <option value=""></option>
                     {% for campaign in campaigns %}
-                        <option value="{{campaign.id}}">{{campaign.name}}</option>
+                    <option value="{{ campaign.id }}" data-requirements="{{ campaign.requirements }}" data-payment="{{ campaign.payment_amount }}">{{ campaign.name }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -35,11 +37,11 @@
             </div>
             <div class="form-group p-2">
                 <label for="requirements" class="form-label">Requirements</label>
-                <input type="text" class="form-control" name="requirements">
+                <input type="text" id='requirements' class="form-control" name="requirements">
             </div>
             <div class="form-group p-2">
                 <label for="payment_amount" class="form-label">Payment Amount</label>
-                <input type="number" class="form-control" name="payment_amount" min="0" required>
+                <input type="number" id="payment_amount" class="form-control" name="payment_amount" min="0" required>
             </div>
             <div class="form-group p-2">
                 <button type="submit" class="btn btn-success"><i class="fa-solid fa-plus"></i> Create Ad Request</button>
@@ -50,4 +52,21 @@
             <a href="{{ url_for('sponsor_home') }}" class="btn btn-info"><i class="fa fa-arrow-circle-left"></i> Go Back</a>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const campaignSelect = document.getElementById('campaign_id');
+            const requirementsInput = document.getElementById('requirements');
+            const paymentInput = document.getElementById('payment_amount');
+            
+            campaignSelect.addEventListener('change', function() {
+                const selectedOption = campaignSelect.options[campaignSelect.selectedIndex];
+                const requirements = selectedOption.getAttribute('data-requirements');
+                const payment = selectedOption.getAttribute('data-payment');
+                
+                requirementsInput.value = requirements || '';
+                paymentInput.value = payment || '';
+            });
+        });
+    </script>
 {% endblock %}

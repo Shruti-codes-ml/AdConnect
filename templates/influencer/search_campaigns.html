@@ -38,8 +38,9 @@
                     <td>Description</td>
                     <td>Start Date</td>
                     <td>End Date</td>
-                    <td>Budget</td>
                     <td>Goals</td>
+                    <td>Requirements</td>
+                    <td>Payment Amount</td>
                     <td>Actions</td>
                 </tr>
             </thead>
@@ -50,8 +51,9 @@
                         <td>{{campaign.description}}</td>
                         <td>{{campaign.start_date}}</td>
                         <td>{{campaign.end_date}}</td>
-                        <td>{{campaign.budget}}</td>
                         <td>{{campaign.goals}}</td>
+                        <td>{{campaign.requirements}}</td>
+                        <td>{{campaign.payment_amount}}</td>
                         <td>
                            <form action="{{url_for('interested_campaign',campaign_id = campaign.id, sponsor_id = campaign.sponsor_id, influencer_id = influencer.id)}}" class="form" method="post">
                                 <button type="submit" class="btn btn-success"> Interested </button>
