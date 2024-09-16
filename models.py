@@ -44,9 +44,11 @@ class Campaign(db.Model):
     description = db.Column(db.Text)
     start_date = db.Column(db.Date)
     end_date = db.Column(db.Date)
-    budget = db.Column(db.Integer)
+    budget = db.Column(db.Float)
     visibility = db.Column(db.String(64))  # Could be 'public' or 'private'
     goals = db.Column(db.Text)
+    payment_amount = db.Column(db.Float, nullable=False)
+    requirements = db.Column(db.String, nullable=False)
 
     sponsor_id = db.Column(db.Integer, db.ForeignKey('sponsors.id'))
     sponsor = db.relationship('Sponsor', back_populates='campaigns')

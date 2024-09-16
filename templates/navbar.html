@@ -6,14 +6,14 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          {% if not session.get('id') %}
+          {% if (not session.get('id')) or (session.get('is_flagged')==True) %}
             <li class="nav-item">
               <a class="nav-link" href="{{  url_for('login')  }}">Login</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for('register')  }}">Register</a>
             </li>
-          {% else %}
+          {% elif (session.get('id')) and (session.get('is_flagged') == False) %}
             {% if session['user_type'] == 'sponsor' %}
               <li class="nav-item"></li>
                 <a class="nav-link" href="{{ url_for('sponsor_home')  }}">Home</a>

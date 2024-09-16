@@ -37,7 +37,11 @@
             </thead>
             <tbody>
                 {% for campaign in campaigns %}
-                    <tr>
+                    {% if campaign.id in flagged_campaign_ids %}
+                        <tr class="table-danger">
+                    {% else %}
+                        <tr>
+                    {% endif %}
                         <td>{{campaign.name}}</td>
                         <td>{{campaign.description}}</td>
                         <td>{{campaign.start_date}}</td>

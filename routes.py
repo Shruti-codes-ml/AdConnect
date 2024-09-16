@@ -67,6 +67,8 @@ def login_post():
     flag = Flag.query.filter_by(entity_type=session['user_type'], entity_id=session['id']).first()
     if flag:
         session['is_flagged'] = True
+        flash("Error : Your account has been flagged. Please contact our support team at support@adconnect.in ")
+        return redirect(url_for('login'))
     else:
         session['is_flagged'] = False
     flash(f"{user_type.capitalize()} login successful")
@@ -321,8 +323,10 @@ def create_campaign_post(sponsor_id):
     budget = request.form.get("budget")
     visibility = request.form.get("visibility")
     goals = request.form.get("goals")
+    requirements = request.form.get('requirements')
+    payment = request.form.get('payment')
     
-    if not all([name,description,start_date,end_date,budget,visibility,goals]):
+    if not all([name,description,start_date,end_date,budget,visibility,goals, requirements,payment]):
         flash("Error : Please enter all required fields")
         return redirect(url_for('create_campaign', sponsor_id=sponsor_id))
     try:
@@ -350,6 +354,15 @@ def create_campaign_post(sponsor_id):
         flash("Error : Visibility should be either public or private")
         return redirect(url_for('create_campaign', sponsor_id=sponsor_id)) 
 
+    try:
+        payment = float(payment)
+        if payment < 0:
+            raise ValueError
+    except ValueError:
+        flash("Error : Payment amount must be a positive number")
+        return redirect(url_for('create_campaign', sponsor_id=sponsor_id))
+    
+
     campaign = Campaign(name = name, 
                         description = description, 
                         start_date = start_date, 
@@ -357,6 +370,8 @@ def create_campaign_post(sponsor_id):
                         budget=budget, 
                         visibility=visibility,
                         goals = goals,
+                        requirements = requirements,
+                        payment_amount = payment,
                         sponsor_id = sponsor_id)
     
     db.session.add(campaign)
@@ -369,17 +384,28 @@ def create_campaign_post(sponsor_id):
 def show_campaigns(sponsor_id):
     campaigns = Campaign.query.filter_by(sponsor_id = sponsor_id).order_by(desc(Campaign.id)).all()
     sponsor = Sponsor.query.filter_by(id=sponsor_id).first()
-    return render_template("sponsor/show_campaigns.html", campaigns = campaigns,sponsor = sponsor)
+    flagged_campaigns = Flag.query.filter_by(entity_type='campaign').all()
+    flagged_campaign_ids = {flag.entity_id for flag in flagged_campaigns}
+
+    return render_template("sponsor/show_campaigns.html", campaigns = campaigns,sponsor = sponsor,flagged_campaign_ids=flagged_campaign_ids)
 
 @app.route("/campaign/<int:campaign_id>/update")
 @sponsor_required
 def update_campaign(campaign_id):
+    flagged = Flag.query.filter_by(entity_type='campaign',entity_id=campaign_id).first()
+    if flagged:
+        flash("Error : This campaign has been flagged. Please contact our support team at support@adconnect.in ")
+        return redirect(url_for('show_campaigns',sponsor_id=session['id']))
     campaign = Campaign.query.filter_by(id=campaign_id).first()
-    return render_template('/sponsor/update_campaign.html', campaign = campaign)
+    return render_template('/sponsor/update_campaigns.html', campaign = campaign)
 
 @app.route("/campaign/<int:campaign_id>/update" , methods=['POST'])
 @sponsor_required
 def update_campaign_post(campaign_id):
+    flagged = Flag.query.filter_by(entity_type='campaign',entity_id=campaign_id).first()
+    if flagged:
+        flash("Error : This campaign has been flagged. Please contact our support team at support@adconnect.in ")
+        return redirect(url_for('show_campaigns',sponsor_id=session['id']))
     campaign = Campaign.query.get(campaign_id)
     if not campaign:
         flash("Error : Campaign does not exist")
@@ -392,10 +418,12 @@ def update_campaign_post(campaign_id):
     budget = request.form.get("budget")
     visibility = request.form.get("visibility")
     goals = request.form.get("goals")
+    requirements = request.form.get('requirements')
+    payment = request.form.get('payment')
 
     campaign = Campaign.query.get(campaign_id)
 
-    if not all([name,description,start_date,end_date,budget,visibility,goals]):
+    if not all([name,description,start_date,end_date,budget,visibility,goals,requirements,payment]):
         flash("Error : Please enter all required fields")
         return redirect(url_for('update_campaign', campaign_id = campaign_id))
     try:
@@ -423,12 +451,23 @@ def update_campaign_post(campaign_id):
         flash("Error : Visibility should be either public or private")
         return redirect(url_for('update_campaign', campaign_id = campaign_id)) 
 
+    try:
+        payment = float(payment)
+        if payment < 0:
+            raise ValueError
+    except ValueError:
+        flash("Error : Payment amount must be a positive number")
+        return redirect(url_for('create_campaign', sponsor_id=sponsor_id))
+    
+
     campaign.name = name
     campaign.description = description
     campaign.end_date = end_date
     campaign.budget = budget
     campaign.visibility = visibility
     campaign.goals = goals
+    campaign.requirements = requirements,
+    campaign.payment_amount = payment,
 
     db.session.commit()
     flash("Campaign updated successfully")
@@ -513,10 +552,13 @@ def create_ad_request_post(influencer_id):
         return redirect(url_for('create_ad_request',influencer_id=influencer_id))
     
     campaign = Campaign.query.filter_by(id = campaign_id, sponsor_id=sponsor_id).first()
+    is_flagged = Flag.query.filter_by(entity_type='campaign', entity_id=campaign_id).first()
     if not campaign:
         flash("Error : Invalid campaign. Please select a valid campaign.")
         return redirect(url_for('create_ad_request', influencer_id=influencer_id))
-
+    if is_flagged:
+        flash("Error : This campaign has been flagged. You cannot create ad requests for this campaign. Kindly contact support at support@adconnect.in for more details.")
+        return redirect(url_for('create_ad_request', influencer_id=influencer_id))
     influencer = Influencer.query.filter_by(id=inflcr_id).first()
     if not influencer:
         flash("Error : Invalid influencer. Please select a valid influencer.")
@@ -952,14 +994,14 @@ def search_campaigns_post(influencer_id):
     query=Campaign.query
     query = query.filter(Campaign.visibility=='public')
     if industry:
-        query=query.filter(Campaign.sponsor.has(industry == industry))
+        query=query.join(Campaign.sponsor).filter(Sponsor.industry == industry)
     if budget:
         if float(budget) > 0:
             query = query.filter(Campaign.budget >= budget)
     campaigns = query.all()
     influencer = Influencer.query.filter_by(id=influencer_id).first()
     industries = [sponsor.industry for sponsor in Sponsor.query.distinct(Sponsor.industry).all()]
-    return redirect(url_for('search_campaigns', influencer_id=influencer_id))
+    return render_template("/influencer/search_campaigns.html", campaigns = campaigns, influencer = influencer, industries=industries)
 
 @app.route('/influencer/<int:influencer_id>/<int:campaign_id>/<int:sponsor_id>/interested_campaign', methods=['POST'])
 @influencer_required
