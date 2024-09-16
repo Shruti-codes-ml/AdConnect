@@ -457,7 +457,7 @@ def update_campaign_post(campaign_id):
             raise ValueError
     except ValueError:
         flash("Error : Payment amount must be a positive number")
-        return redirect(url_for('create_campaign', sponsor_id=sponsor_id))
+        return redirect(url_for('update_campaign', campaign_id = campaign_id))
     
 
     campaign.name = name
