@@ -1,12 +1,11 @@
 from app import app
 import re
-from flask import render_template
-from flask import request, flash, redirect, url_for, session
+from flask import render_template, request, flash, redirect, url_for, session
 from models import db, Influencer, Sponsor, Admin, Campaign, AdRequest, Flag
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from datetime import datetime
-from sqlalchemy import desc
+from sqlalchemy import desc, func
 
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
@@ -1205,7 +1204,26 @@ def admin_home():
     public_campaigns = Campaign.query.filter_by(visibility='public').all()
     flagged_influencers = Flag.query.filter_by(entity_type='influencer').all()
     flagged_sponsors = Flag.query.filter_by(entity_type='sponsor').all()
-    
+    accepted_requests = AdRequest.query.filter_by(status="Accepted").all()
+    rejected_requests = AdRequest.query.filter_by(status="Rejected").all()
+    pending_requests = AdRequest.query.filter_by(status="Pending").all()
+
+    industry_distribution = db.session.query(
+        Sponsor.industry,
+        func.count(Sponsor.id).label('count')
+    ).group_by(Sponsor.industry).all()
+
+    niche_distribution = db.session.query(
+        Influencer.niche,
+        func.count(Influencer.id).label('count')
+    ).group_by(Influencer.niche).all()
+
+    niches = [item.niche for item in niche_distribution]
+    niche_counts = [item.count for item in niche_distribution]
+
+    # Process industry distribution into dictionaries
+    industries = [item.industry for item in industry_distribution]
+    counts = [item.count for item in industry_distribution]
     return render_template('/admin/admin_home.html',
                            admin = admin, 
                            influencers=len(influencers), 
@@ -1213,7 +1231,15 @@ def admin_home():
                            private_campaigns=len(private_campaigns),
                            public_campaigns=len(public_campaigns),
                            flagged_influencers = len(flagged_influencers),
-                           flagged_sponsors = len(flagged_sponsors))
+                           flagged_sponsors = len(flagged_sponsors),
+                           no_of_acc_req = len(accepted_requests),
+                           no_of_rej_req = len(rejected_requests),
+                           no_of_pen_req = len(pending_requests),
+                           industries=industries,
+                           counts=counts,
+                           niches=niches,
+                           niche_counts=niche_counts
+                           )
 
 @app.route("/admin/manage_influencers")
 @admin_required

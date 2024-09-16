@@ -68,6 +68,111 @@
             
             <a href="{{ url_for('manage_campaigns') }}" class="btn btn-info"><i class="fa-solid fa-square-poll-horizontal"></i> Manage Campaigns</a>
         </div>
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+        
+        <div class="container mt-5">
+            <div class="row">
+                <div class="col-md-4">
+                    <canvas id="nicheChart" width="500" height="500"></canvas>
+                </div>
+                <div class="col-md-4">
+                    <canvas id="industryChart" width="500" height="500"></canvas>
+                </div>
+                <div class="col-md-4">
+                    <canvas id="myChart" width="500" height="500"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            var no_of_acc_req = {{ no_of_acc_req | tojson }};
+            var no_of_rej_req = {{ no_of_rej_req | tojson }};
+            var no_of_pen_req = {{ no_of_pen_req | tojson }};
+            var xValues = ["Accepted","Rejected","Pending"]
+            var yValues = [no_of_acc_req,no_of_rej_req, no_of_pen_req]
+            var barColors = ["#00aba9","#e8c3b9","#1e7145"];
+            new Chart("myChart", {
+                type: "doughnut",
+                data: {
+                  labels: xValues,
+                  datasets: [{
+                    backgroundColor: barColors,
+                    data: yValues
+                  }]
+                },
+                options: {
+                  title: {
+                    display: true,
+                    text: "Status of Ad Requests"
+                  }
+                }
+            });
+            var industries = {{ industries | tojson }};
+            var counts = {{ counts | tojson }};
+            var industryColors = [   
+            "#FF99C8",  
+            "#6B8E23",  
+            "#87CEEB",  
+            "#D2691E"
+        ];
+
+            new Chart("industryChart", {
+                type: "bar",
+                data: {
+                    labels: industries,
+                    datasets: [{
+                        label: "Number of Sponsors",
+                        backgroundColor: industryColors,
+                        data: counts
+                    }]
+                },
+                options: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: true,
+                        text: "Distribution of Industries in Sponsors"
+                    },
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true
+                            }
+                        }]
+                    }
+                }
+            });
+
+            var niches = {{ niches | tojson }};
+            var nicheCounts = {{ niche_counts | tojson }};
+            var nicheColors = [  
+            "#5F9EA0",
+            "#FF9F40",  
+            "#FFC0CB",
+            "#4BC0C0",  
+            "#FFD700",
+            "#00FF00",
+            "#F7464A"];
+
+            new Chart("nicheChart", {
+                type: "pie",
+                data: {
+                    labels: niches,
+                    datasets: [{
+                        label: "Number of Influencers",
+                        backgroundColor: nicheColors,
+                        data: nicheCounts
+                    }]
+                },
+                options: {
+                    title: {
+                        display: true,
+                        text: "Distribution of Niches in Influencers"
+                    }
+                }
+            });
+        </script>
     </div>    
-    
 {% endblock %}
