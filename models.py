@@ -19,8 +19,8 @@ class Sponsor(db.Model):
     username = db.Column(db.String(128),unique=True,nullable=False)
     passhash = db.Column(db.String(256),nullable=False)
     name = db.Column(db.String(64),nullable=True)
-    budget = db.Column(db.Integer,nullable=True)
-    industry = db.Column(db.String(64), nullable=True)
+    budget = db.Column(db.Integer,nullable=False)
+    industry = db.Column(db.String(64), nullable=False)
 
     campaigns = db.relationship('Campaign', back_populates='sponsor')
     ad_requests = db.relationship('AdRequest', back_populates='sponsor')

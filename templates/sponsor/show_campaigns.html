@@ -50,6 +50,10 @@
                         <td>{{campaign.visibility}}</td>
                         <td>{{campaign.goals}}</td>
                         <td>
+                            <a href="{{url_for('track_campaign', campaign_id=campaign.id)}}" class="btn btn-info">
+                                <i class="fa-solid fa-chart-column"></i>
+                                Track 
+                            </a>
                             <a href="{{url_for('update_campaign', campaign_id=campaign.id)}}" class="btn btn-primary">
                                 <i class="fas fa-edit"></i>
                                 Update

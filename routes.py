@@ -490,6 +490,11 @@ def delete_campaign_post(campaign_id):
     flash("Campaign deleted successfully")
     return redirect(url_for('sponsor_home'))
 
+@app.route("/campaign/<int:campaign_id>/track")
+def track_campaign(campaign_id):
+    campaign = Campaign.query.get(campaign_id)
+    return f"Track Campaign : {campaign.name}"
+
 @app.route("/sponsor/search")
 @sponsor_required
 def search_influencer():
@@ -765,8 +770,8 @@ def make_payment_post(ad_request_id):
     
     if ad_request.payment_status == True:
         flash("Payment is already processed")
-        return redirect(url_for('make_payment',ad_request_id=ad_request.id))
-    
+        return redirect(url_for('sponsor_home'))
+
     payment_amount = request.form.get('payment_amount')
     try:
         payment_amount = float(payment_amount)
@@ -780,7 +785,7 @@ def make_payment_post(ad_request_id):
     ad_request.payment_status = True
     db.session.commit()
     flash("Payment successful")
-    return redirect(url_for('make_payment', ad_request_id=ad_request.id))
+    return redirect(url_for('make_payment',ad_request_id = ad_request.id))
 
 @app.route("/sponsor/ad_request/<int:ad_request_id>/download_invoice")
 @sponsor_required
@@ -822,7 +827,7 @@ def download_invoice(ad_request_id):
 
     # Title and Subtitle
     title = Paragraph("AdConnect", title_style)
-    subtitle = Paragraph(f"Invoice for Ad Request #{ad_request.id}", subtitle_style)
+    subtitle = Paragraph(f"Invoice for Ad Request", subtitle_style)
 
     elements.append(title)
     elements.append(Spacer(1, 12))
