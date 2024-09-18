@@ -493,7 +493,10 @@ def delete_campaign_post(campaign_id):
 @app.route("/campaign/<int:campaign_id>/track")
 def track_campaign(campaign_id):
     campaign = Campaign.query.get(campaign_id)
-    return f"Track Campaign : {campaign.name}"
+    ad_requests = AdRequest.query.filter_by(campaign_id = campaign_id).all()
+    spendings = sum(ad_request.payment_amount for ad_request in ad_requests if ad_request.payment_status == 1)
+    unique_platforms = set(ad_request.influencer.niche for ad_request in ad_requests if ad_request.influencer)
+    return render_template('/sponsor/track_campaigns.html',campaign=campaign,spendings=spendings,ad_requests=ad_requests,unique_platforms=unique_platforms)
 
 @app.route("/sponsor/search")
 @sponsor_required

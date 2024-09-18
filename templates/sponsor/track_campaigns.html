@@ -1,0 +1,76 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Track Campaign
+{% endblock %}
+
+{% block content %}
+    <div class="p-4 bg-white bg-opacity-75 rounded shadow mt-3">
+        
+        <div class="container">
+            <h2 class="display-2">{{  campaign.name  }}</h2>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="alert alert-warning" role="alert" style="gap: 10px;">
+                        <h4 class="alert-heading">Campaign Goals </h4> 
+                        <p class="lead">{{ campaign.goals }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-secondary" role="alert">
+                <div class="row">
+                    <div class="col-md-4">
+                        <p class="lead">End Date : {{campaign.end_date}} </p>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="lead">Budget Allocated : {{campaign.budget}} </p>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="lead">Budget Spent : {{spendings}}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+        
+                <div class="col-md-3">
+                    <div class="card text-white bg-primary mb-3" style="max-width: 18rem;">
+                        <div class="card-header">Total Ad Requests</div>
+                        <div class="card-body">
+                            <h5 class="card-title"> {{ ad_requests | length }}  </h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-secondary mb-3" style="max-width: 18rem;">
+                        <div class="card-header">Ad Requests Accepted</div>
+                        <div class="card-body">
+                            <h5 class="card-title"> {{ ad_requests | selectattr('status', 'equalto', 'Accepted') | list | length }}  </h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-success mb-3" style="max-width: 18rem;">
+                        <div class="card-header">Ad Requests Rejected</div>
+                        <div class="card-body">
+                            <h5 class="card-title"> {{ ad_requests | selectattr('status', 'equalto', 'Rejected') | list | length }}  </h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-danger mb-3" style="max-width: 18rem;">
+                        <div class="card-header">Platforms Covered</div>
+                        <div class="card-body">
+                            <h5 class="card-title"> {{ unique_platforms | length }} </h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-group p-2">
+            <a href="{{ url_for('show_campaigns',sponsor_id = campaign.sponsor_id) }}" class="btn btn-info"><i class="fa fa-arrow-circle-left"></i> Go Back</a>
+        </div>
+    </div>
+{% endblock %}
