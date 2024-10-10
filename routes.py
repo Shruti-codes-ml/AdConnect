@@ -501,8 +501,8 @@ def track_campaign(campaign_id):
 @app.route("/sponsor/search")
 @sponsor_required
 def search_influencer():
-    categories = [influencer.category for influencer in Influencer.query.distinct(Influencer.category).all()]
-    niches = [influencer.niche for influencer in Influencer.query.distinct(Influencer.niche).all()]
+    categories = set([influencer.category for influencer in Influencer.query.distinct(Influencer.category).all()])
+    niches = set([influencer.niche for influencer in Influencer.query.distinct(Influencer.niche).all()])
 
     influencers = Influencer.query.all()
     return render_template("/sponsor/search_influencers.html", influencers = influencers, categories=categories, niches=niches)
@@ -987,7 +987,7 @@ def show_ad_requests(influencer_id):
 @influencer_required
 def search_campaigns(influencer_id):
     influencer = Influencer.query.filter_by(id=influencer_id).first()
-    industries = [sponsor.industry for sponsor in Sponsor.query.distinct(Sponsor.industry).all()]
+    industries = set([sponsor.industry for sponsor in Sponsor.query.distinct(Sponsor.industry).all()])
     campaigns = Campaign.query.filter_by(visibility = "public" ).all()
     return render_template("/influencer/search_campaigns.html", campaigns = campaigns, influencer = influencer, industries=industries)
 
@@ -1005,7 +1005,7 @@ def search_campaigns_post(influencer_id):
             query = query.filter(Campaign.budget >= budget)
     campaigns = query.all()
     influencer = Influencer.query.filter_by(id=influencer_id).first()
-    industries = [sponsor.industry for sponsor in Sponsor.query.distinct(Sponsor.industry).all()]
+    industries = set([sponsor.industry for sponsor in Sponsor.query.distinct(Sponsor.industry).all()])
     return render_template("/influencer/search_campaigns.html", campaigns = campaigns, influencer = influencer, industries=industries)
 
 @app.route('/influencer/<int:influencer_id>/<int:campaign_id>/<int:sponsor_id>/interested_campaign', methods=['POST'])
